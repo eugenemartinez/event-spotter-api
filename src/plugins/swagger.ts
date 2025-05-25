@@ -19,7 +19,7 @@ async function swaggerSetup(server: FastifyInstance) {
     },
   ];
 
-  const productionBaseUrl = process.env.VERCEL_URL || process.env.PUBLIC_DOMAIN_URL;
+  const productionBaseUrl = process.env.PUBLIC_DOMAIN_URL;
   let secureProductionApiOrigin = ''; // Variable to store the secure production origin
 
   if (process.env.NODE_ENV === 'production' && productionBaseUrl) {
