@@ -9,7 +9,6 @@ import { z } from 'zod';
 import sensible from '@fastify/sensible';
 import Redis from 'ioredis';
 import { IncomingMessage, ServerResponse } from 'http';
-import pino, { LoggerOptions as PinoLoggerOptions, DestinationStream } from 'pino';
 
 // Import plugin setup functions
 import { registerErrorHandler } from './lib/errorHandler';
@@ -24,39 +23,8 @@ import prismaPlugin from './plugins/prisma';
 import authRoutes from './api/auth/auth.routes';
 import eventRoutes from './api/events/event.routes';
 
-// Assuming defaultFastifyOptions is an object of FastifyServerOptions
-import { defaultFastifyOptions } from './config/logger';
-
-const pinoTestConfig: PinoLoggerOptions = {
-  level: 'silent',
-  transport: {
-    target: 'pino-pretty',
-    options: {
-      colorize: true,
-      translateTime: 'SYS:yyyy-mm-dd HH:MM:ss.l o',
-      ignore: 'pid,hostname,reqId,req,res,responseTime',
-    },
-  },
-  // base is optional, omit if no specific base properties for tests
-  // base: {},
-};
-
-const pinoDefaultConfig: PinoLoggerOptions = {
-  level: process.env.LOG_LEVEL || 'info',
-  transport: {
-    target: 'pino-pretty',
-    options: {
-      colorize: true,
-      translateTime: 'SYS:yyyy-mm-dd HH:MM:ss.l o',
-      ignore: 'pid,hostname',
-    },
-  },
-  // base is optional, omit if no specific base properties for default
-  // base: {},
-};
-
-const pinoConfig: PinoLoggerOptions =
-  process.env.NODE_ENV === 'test' ? pinoTestConfig : pinoDefaultConfig;
+// Import loggerOptions AND defaultFastifyOptions from logger.ts
+import { defaultFastifyOptions, loggerOptions as appLoggerOptions } from './config/logger'; // Changed this line
 
 // Define a more specific type for opts based on the Fastify factory's generics
 type AppFastifyServerOptions = FastifyServerOptions<RawServerDefault, FastifyBaseLogger>;
@@ -69,13 +37,15 @@ export async function build(opts: Partial<AppFastifyServerOptions> = {}): Promis
     FastifyBaseLogger,
     ZodTypeProvider
   >({
-    // Spread defaultFastifyOptions first so they can be overridden by pinoConfig or opts
-    ...(defaultFastifyOptions || {}), // Ensure defaultFastifyOptions is an object, or provide empty if undefined
-    logger: pinoConfig, // Explicitly set logger, overrides any logger in defaultFastifyOptions
-    ...opts, // Spread specific opts for this build, overrides defaults and pinoConfig if keys match
-    requestIdHeader: 'X-Request-Id', // Ensure these are not overridden if they are critical
-    requestIdLogLabel: 'reqId',
-    disableRequestLogging: false,
+    // Spread defaultFastifyOptions first so they can be overridden by opts
+    ...(defaultFastifyOptions || {}),
+    // Use the imported appLoggerOptions which has the correct conditional logic
+    logger: appLoggerOptions, // Changed this line
+    ...opts, // Spread specific opts for this build, overrides defaults if keys match
+    // Ensure these are not overridden if they are critical and not part of defaultFastifyOptions or appLoggerOptions
+    // requestIdHeader: 'X-Request-Id', // This is in defaultFastifyOptions
+    // requestIdLogLabel: 'reqId', // This is in defaultFastifyOptions
+    // disableRequestLogging: false, // This is in defaultFastifyOptions
   });
 
   // --- Core Fastify Setup (Synchronous) ---

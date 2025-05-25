@@ -9,7 +9,7 @@ interface MinimalReply {
 }
 
 export const loggerOptions: FastifyServerOptions['logger'] = {
-  level: isProduction ? 'info' : 'debug',
+  level: isProduction ? 'info' : 'silent',
   transport: !isProduction
     ? {
         target: 'pino-pretty',
