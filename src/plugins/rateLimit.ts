@@ -19,7 +19,7 @@ async function rateLimitSetup(server: FastifyInstance) {
     try {
       redisClientInstance = new Redis(redisUrl, {
         maxRetriesPerRequest: 3, // Optional: sensible default
-        connectTimeout: 5000,    // Optional: sensible default
+        connectTimeout: 5000, // Optional: sensible default
         // Add any other Redis options you need
       });
 
@@ -28,7 +28,10 @@ async function rateLimitSetup(server: FastifyInstance) {
       });
 
       redisClientInstance.on('error', (err) => {
-        server.log.error({ err }, 'Rate limit Redis client connection error. Rate limiting might fall back or fail.');
+        server.log.error(
+          { err },
+          'Rate limit Redis client connection error. Rate limiting might fall back or fail.',
+        );
         // Depending on how critical Redis is, you might want to handle this more gracefully,
         // e.g., by not registering the rate limiter or by using an in-memory fallback explicitly.
         // For now, if Redis connection fails after initial setup, @fastify/rate-limit might error out on requests.
@@ -58,9 +61,11 @@ async function rateLimitSetup(server: FastifyInstance) {
           instance.log.info('Rate limit Redis client disconnected.');
         }
       });
-
     } catch (error) {
-      server.log.error({ error }, 'Failed to initialize Redis for rate limiting. Falling back to in-memory store.');
+      server.log.error(
+        { error },
+        'Failed to initialize Redis for rate limiting. Falling back to in-memory store.',
+      );
       // Fallback to in-memory if Redis instantiation fails
       await server.register(fastifyRateLimit, {
         max: defaultMax,
@@ -69,7 +74,9 @@ async function rateLimitSetup(server: FastifyInstance) {
           return request.ip;
         },
       });
-      server.log.info('@fastify/rate-limit registered successfully with in-memory store (due to Redis init failure).');
+      server.log.info(
+        '@fastify/rate-limit registered successfully with in-memory store (due to Redis init failure).',
+      );
     }
   } else {
     server.log.warn('REDIS_URL not found. Rate limiting will use in-memory store.');

@@ -20,8 +20,9 @@ describe('Application Smoke Tests', () => {
   it('should build the app instance correctly', () => {
     expect(app).toBeDefined();
     // Check if a known route is registered
-    expect(app.printRoutes({ commonPrefix: false })).toContain('/api/auth/register');
-    expect(app.printRoutes({ commonPrefix: false })).toContain('/ping');
+    const routesOutput = app.printRoutes({ commonPrefix: false });
+    expect(routesOutput).toContain('/auth/register (POST)'); // Adjusted assertion
+    expect(routesOutput).toContain('/ping (GET, HEAD)'); // Adjusted assertion
   });
 
   it('should have the prisma client decorated on the app instance', () => {

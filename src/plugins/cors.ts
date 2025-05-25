@@ -19,7 +19,7 @@ async function corsSetup(server: FastifyInstance) {
         callback(null, true);
         return;
       }
-      const listOfAllowedOrigins = allowedOriginsEnv.split(',').map(item => item.trim());
+      const listOfAllowedOrigins = allowedOriginsEnv.split(',').map((item) => item.trim());
       if (origin && listOfAllowedOrigins.includes(origin)) {
         callback(null, true);
       } else if (!origin && process.env.NODE_ENV !== 'production') {

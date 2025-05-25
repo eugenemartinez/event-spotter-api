@@ -20,7 +20,10 @@ async function prismaPlugin(fastify: FastifyInstance) {
     await prisma.$connect(); // Or a simple query like prisma.$queryRaw`SELECT 1`
     fastify.log.info('Prisma client connected to database (via existing instance).');
   } catch (error) {
-    fastify.log.error({ error }, 'Prisma client failed to connect to database (via existing instance).');
+    fastify.log.error(
+      { error },
+      'Prisma client failed to connect to database (via existing instance).',
+    );
     // Depending on your app's needs, you might want to throw this error
     // to prevent the server from starting if the DB is critical.
     // throw error;

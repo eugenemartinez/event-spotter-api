@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "ES2022", // Or a newer version like ES2022
     "lib": ["ESNext"],
+    "types": ["node", "vitest/globals"], // Add "vitest/globals"
     "module": "commonjs",          // Changed
     "moduleResolution": "node",     // Changed (or remove)
     "outDir": "./dist", // Vercel will look for compiled output here

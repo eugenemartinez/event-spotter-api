@@ -1,5 +1,5 @@
 import { loadEnv } from './config/env'; // Your environment variable loader
-import { build } from './app';         // The build function from your new app.ts
+import { build } from './app'; // The build function from your new app.ts
 
 // Load environment variables at the very beginning
 loadEnv();
@@ -22,10 +22,9 @@ const start = async () => {
     await app.listen({ port, host });
     // Fastify's logger (configured in app.ts via loggerOptions)
     // will typically output listening information.
-
   } catch (err) {
     // Use console.error for critical startup errors, as the app logger might not be fully available.
-    console.error("Error during server start:", err);
+    console.error('Error during server start:', err);
     process.exit(1);
   }
 };
@@ -44,11 +43,10 @@ const modifiedStart = async () => {
     const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
     await appInstanceForShutdown.listen({ port, host });
   } catch (err) {
-    console.error("Error during server start:", err);
+    console.error('Error during server start:', err);
     process.exit(1);
   }
 };
-
 
 listeners.forEach((signal) => {
   process.on(signal, async () => {

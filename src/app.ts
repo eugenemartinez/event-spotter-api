@@ -55,13 +55,20 @@ const pinoDefaultConfig: PinoLoggerOptions = {
   // base: {},
 };
 
-const pinoConfig: PinoLoggerOptions = process.env.NODE_ENV === 'test' ? pinoTestConfig : pinoDefaultConfig;
+const pinoConfig: PinoLoggerOptions =
+  process.env.NODE_ENV === 'test' ? pinoTestConfig : pinoDefaultConfig;
 
 // Define a more specific type for opts based on the Fastify factory's generics
 type AppFastifyServerOptions = FastifyServerOptions<RawServerDefault, FastifyBaseLogger>;
 
 export async function build(opts: Partial<AppFastifyServerOptions> = {}): Promise<FastifyInstance> {
-  const app = Fastify<RawServerDefault, IncomingMessage, ServerResponse, FastifyBaseLogger, ZodTypeProvider>({
+  const app = Fastify<
+    RawServerDefault,
+    IncomingMessage,
+    ServerResponse,
+    FastifyBaseLogger,
+    ZodTypeProvider
+  >({
     // Spread defaultFastifyOptions first so they can be overridden by pinoConfig or opts
     ...(defaultFastifyOptions || {}), // Ensure defaultFastifyOptions is an object, or provide empty if undefined
     logger: pinoConfig, // Explicitly set logger, overrides any logger in defaultFastifyOptions
@@ -112,62 +119,75 @@ export async function build(opts: Partial<AppFastifyServerOptions> = {}): Promis
   await app.register(eventRoutes, { prefix: '/api/events' });
 
   // API Base Route
-  app.get('/api', {
-    schema: {
-      description: 'API base information',
-      tags: ['Health'], // Or a new tag like 'General' or 'API Info'
-      summary: 'Provides basic API information and links to main categories',
-      response: {
-        200: z.object({
-          message: z.string(),
-          available_endpoints: z.array(z.string()),
-          documentation: z.string(),
-        }),
+  app.get(
+    '/api',
+    {
+      schema: {
+        description: 'API base information',
+        tags: ['Health'], // Or a new tag like 'General' or 'API Info'
+        summary: 'Provides basic API information and links to main categories',
+        response: {
+          200: z.object({
+            message: z.string(),
+            available_endpoints: z.array(z.string()),
+            documentation: z.string(),
+          }),
+        },
       },
     },
-  }, async (request, reply) => {
-    let apiHostBase: string;
+    async (request, reply) => {
+      let apiHostBase: string;
 
-    if (process.env.NODE_ENV === 'production') {
-      const productionUrl = process.env.PUBLIC_DOMAIN_URL || process.env.VERCEL_URL;
-      if (productionUrl) {
-        apiHostBase = productionUrl.startsWith('http') ? productionUrl : `https://${productionUrl}`;
+      if (process.env.NODE_ENV === 'production') {
+        const productionUrl = process.env.PUBLIC_DOMAIN_URL || process.env.VERCEL_URL;
+        if (productionUrl) {
+          apiHostBase = productionUrl.startsWith('http')
+            ? productionUrl
+            : `https://${productionUrl}`;
+        } else {
+          // Fallback for production if no specific URL is set, though unlikely for Vercel
+          apiHostBase = `${request.protocol}://${request.hostname}`;
+          app.log.warn(
+            'Production environment detected, but PUBLIC_DOMAIN_URL or VERCEL_URL not set for /api route. Using request-derived host.',
+          );
+        }
       } else {
-        // Fallback for production if no specific URL is set, though unlikely for Vercel
-        apiHostBase = `${request.protocol}://${request.hostname}`;
-        app.log.warn('Production environment detected, but PUBLIC_DOMAIN_URL or VERCEL_URL not set for /api route. Using request-derived host.');
+        // For local development, use localhost or request-derived host
+        const port = process.env.PORT || '3000';
+        // Prefer localhost for consistency with openapi.yaml local dev server
+        apiHostBase = `http://localhost:${port}`;
+        // Alternatively, could use: apiHostBase = `${request.protocol}://${request.hostname}`;
       }
-    } else {
-      // For local development, use localhost or request-derived host
-      const port = process.env.PORT || '3000';
-      // Prefer localhost for consistency with openapi.yaml local dev server
-      apiHostBase = `http://localhost:${port}`;
-      // Alternatively, could use: apiHostBase = `${request.protocol}://${request.hostname}`;
-    }
 
-    return reply.send({
-      message: "Welcome to the EventSpotter API. Please use specific endpoints.",
-      available_endpoints: [
-        `${apiHostBase}/api/auth`,
-        `${apiHostBase}/api/events`,
-        `${apiHostBase}/api/events/categories`,
-        `${apiHostBase}/api/events/tags`,
-      ],
-      documentation: `${apiHostBase}/documentation`,
-    });
-  });
+      return reply.send({
+        message: 'Welcome to the EventSpotter API. Please use specific endpoints.',
+        available_endpoints: [
+          `${apiHostBase}/api/auth`,
+          `${apiHostBase}/api/events`,
+          `${apiHostBase}/api/events/categories`,
+          `${apiHostBase}/api/events/tags`,
+        ],
+        documentation: `${apiHostBase}/documentation`,
+      });
+    },
+  );
   app.log.info('Registered /api base route.');
 
-  app.get('/api/ping', { // Changed from /ping to /api/ping
-    schema: {
-      description: 'Ping endpoint',
-      tags: ['Health'],
-      summary: 'Responds with pong',
-      response: { 200: z.object({ pong: z.string() }) }
-    }
-  }, async (_request, reply) => {
-    return reply.send({ pong: 'it works!' });
-  });
+  app.get(
+    '/api/ping',
+    {
+      // Changed from /ping to /api/ping
+      schema: {
+        description: 'Ping endpoint',
+        tags: ['Health'],
+        summary: 'Responds with pong',
+        response: { 200: z.object({ pong: z.string() }) },
+      },
+    },
+    async (_request, reply) => {
+      return reply.send({ pong: 'it works!' });
+    },
+  );
   app.log.info('Registered /api/ping test route.'); // Updated log message
 
   // Ensure all plugins are loaded before returning

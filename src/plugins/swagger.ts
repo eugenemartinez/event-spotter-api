@@ -16,12 +16,14 @@ async function swaggerSetup(server: FastifyInstance) {
     {
       url: `http://localhost:${port}/api`,
       description: 'Local development server (localhost)',
-    }
+    },
   ];
 
   const productionBaseUrl = process.env.VERCEL_URL || process.env.PUBLIC_DOMAIN_URL;
   if (process.env.NODE_ENV === 'production' && productionBaseUrl) {
-    const secureProductionBaseUrl = productionBaseUrl.startsWith('http') ? productionBaseUrl : `https://${productionBaseUrl}`;
+    const secureProductionBaseUrl = productionBaseUrl.startsWith('http')
+      ? productionBaseUrl
+      : `https://${productionBaseUrl}`;
     serverList.unshift({
       url: `${secureProductionBaseUrl}/api`,
       description: 'Production server',
@@ -41,16 +43,13 @@ async function swaggerSetup(server: FastifyInstance) {
           v3Doc.servers = serverList;
         }
         return swaggerDoc;
-      }
+      },
     },
     // exposeRoute: true, // Default is true, can be omitted
   });
   server.log.info('@fastify/swagger (static mode) registered successfully.');
 
-  const localDevApiOrigins = [
-    `http://localhost:${port}`,
-    `http://127.0.0.1:${port}`
-  ];
+  const localDevApiOrigins = [`http://localhost:${port}`, `http://127.0.0.1:${port}`];
 
   const swaggerUiPluginOptions: FastifySwaggerUiOptions = {
     routePrefix: '/documentation',

@@ -7,9 +7,10 @@ declare module 'fastify' {
   export interface FastifyInstance {
     authenticate: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
   }
-  export interface FastifyJWT { // Ensure this matches how you use it
-    payload: { id: string; username: string; /* add other payload fields if any */ };
-    user: { id: string; username: string; /* ensure this matches request.user */ };
+  export interface FastifyJWT {
+    // Ensure this matches how you use it
+    payload: { id: string; username: string /* add other payload fields if any */ };
+    user: { id: string; username: string /* ensure this matches request.user */ };
   }
 }
 
@@ -30,13 +31,16 @@ async function jwtAuthSetup(server: FastifyInstance) {
   });
   server.log.info('JWT plugin registered.');
 
-  server.decorate("authenticate", async function(request: FastifyRequest, reply: FastifyReply) {
+  server.decorate('authenticate', async function (request: FastifyRequest, reply: FastifyReply) {
     try {
       await request.jwtVerify();
       // If you want to attach the decoded user to request.user directly after verification:
       // request.user = request.jwt.user; // or request.jwt.payload depending on your setup
     } catch (err: any) {
-      server.log.warn({ error: { message: err.message, name: err.name }, requestId: request.id }, 'JWT verification failed');
+      server.log.warn(
+        { error: { message: err.message, name: err.name }, requestId: request.id },
+        'JWT verification failed',
+      );
       reply.code(401).send({ message: 'Authentication required: Invalid or missing token' });
     }
   });

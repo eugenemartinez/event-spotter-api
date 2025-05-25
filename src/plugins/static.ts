@@ -23,9 +23,11 @@ async function staticSetup(server: FastifyInstance) {
     index: 'index.html',
     decorateReply: true, // Default is true, set to false only if you have a specific reason
   });
-  server.log.info('Static files plugin registered. Root "/" should serve index.html from public directory.');
+  server.log.info(
+    'Static files plugin registered. Root "/" should serve index.html from public directory.',
+  );
 }
 
 export default fp(staticSetup, {
-  name: 'custom-static-setup' // Added a name for the plugin
+  name: 'custom-static-setup', // Added a name for the plugin
 });

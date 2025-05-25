@@ -8,14 +8,18 @@ import {
   ChangePasswordInput,
   savedEventsResponseSchema,
 } from './auth.schemas';
-import { transformEventForApi, commonEventSelect, PrismaEventType } from '../events/event.controllers'; // Import PrismaEventType
+import {
+  transformEventForApi,
+  commonEventSelect,
+  PrismaEventType,
+} from '../events/event.controllers'; // Import PrismaEventType
 import { ApiEventResponse } from '../events/event.schemas';
 import { AuthenticatedUser, AppFastifyRequest, AppFastifyReply } from '../../types';
 
 // --- Controller for POST /api/auth/register ---
 export async function registerUserHandler(
   request: AppFastifyRequest<{ Body: RegisterUserInput }>,
-  reply: AppFastifyReply<{ Body: RegisterUserInput }>
+  reply: AppFastifyReply<{ Body: RegisterUserInput }>,
 ) {
   const { email, password, username } = request.body;
 
@@ -35,7 +39,10 @@ export async function registerUserHandler(
       select: { id: true, username: true, email: true }, // Ensure these are selected
     });
 
-    request.log.info({ userId: newUser.id, username: newUser.username }, 'User registered successfully.');
+    request.log.info(
+      { userId: newUser.id, username: newUser.username },
+      'User registered successfully.',
+    );
 
     const token = await reply.jwtSign({
       id: newUser.id,
@@ -52,11 +59,18 @@ export async function registerUserHandler(
     });
   } catch (error: unknown) {
     request.log.error({ error, email, username }, 'Error during user registration');
-    if (error instanceof ZodError) { return reply.code(400).send({ message: "Validation error", errors: error.flatten().fieldErrors }); }
+    if (error instanceof ZodError) {
+      return reply
+        .code(400)
+        .send({ message: 'Validation error', errors: error.flatten().fieldErrors });
+    }
     // Handle potential Prisma unique constraint violation if the initial check somehow misses (though unlikely with the current logic)
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-        request.log.warn({ email, username, prismaCode: error.code }, 'Prisma unique constraint violation during registration.');
-        return reply.code(409).send({ message: 'User with this username or email already exists.' });
+      request.log.warn(
+        { email, username, prismaCode: error.code },
+        'Prisma unique constraint violation during registration.',
+      );
+      return reply.code(409).send({ message: 'User with this username or email already exists.' });
     }
     throw error; // For global error handler
   }
@@ -65,7 +79,7 @@ export async function registerUserHandler(
 // --- Controller for POST /api/auth/login ---
 export async function loginUserHandler(
   request: AppFastifyRequest<{ Body: LoginUserInput }>,
-  reply: AppFastifyReply<{ Body: LoginUserInput }>
+  reply: AppFastifyReply<{ Body: LoginUserInput }>,
 ) {
   const { identifier, password } = request.body;
   try {
@@ -99,7 +113,11 @@ export async function loginUserHandler(
     });
   } catch (error: unknown) {
     request.log.error({ error, identifier }, 'Error during user login');
-    if (error instanceof ZodError) { return reply.code(400).send({ message: "Validation error", errors: error.flatten().fieldErrors }); }
+    if (error instanceof ZodError) {
+      return reply
+        .code(400)
+        .send({ message: 'Validation error', errors: error.flatten().fieldErrors });
+    }
     throw error;
   }
 }
@@ -107,15 +125,23 @@ export async function loginUserHandler(
 // --- Controller for GET /api/auth/me ---
 export async function getAuthenticatedUserDetailsHandler(
   request: AppFastifyRequest, // No specific body/params/query needed for this handler
-  reply: AppFastifyReply
+  reply: AppFastifyReply,
 ) {
   // request.user should be populated by the 'authenticate' hook (JWT payload)
-  const jwtUser = request.user as { id: string; username: string; email: string; iat?: number; exp?: number; }; // Adjust based on your actual JWT payload
+  const jwtUser = request.user as {
+    id: string;
+    username: string;
+    email: string;
+    iat?: number;
+    exp?: number;
+  }; // Adjust based on your actual JWT payload
 
   if (!jwtUser || !jwtUser.id) {
     // This case should ideally be caught by the authenticate hook if token is malformed
     // or if jwtVerify didn't populate request.user as expected.
-    request.log.warn('getAuthenticatedUserDetailsHandler called without a valid user object on request.');
+    request.log.warn(
+      'getAuthenticatedUserDetailsHandler called without a valid user object on request.',
+    );
     return reply.code(401).send({ message: 'Authentication token did not yield a user.' });
   }
 
@@ -126,7 +152,10 @@ export async function getAuthenticatedUserDetailsHandler(
     });
 
     if (!userFromDb) {
-      request.log.warn({ userIdFromToken: jwtUser.id }, 'User from valid token not found in DB for /me endpoint.');
+      request.log.warn(
+        { userIdFromToken: jwtUser.id },
+        'User from valid token not found in DB for /me endpoint.',
+      );
       // This is where the message is coming from for your failing test.
       // Standardize the message here:
       return reply.code(404).send({ message: 'User not found' }); // Or 'User not found.' to match test
@@ -141,16 +170,16 @@ export async function getAuthenticatedUserDetailsHandler(
       updatedAt: userFromDb.updatedAt.toISOString(),
     });
   } catch (error: unknown) {
-    request.log.error({ error, userIdFromToken: jwtUser.id }, 'Error fetching authenticated user details');
+    request.log.error(
+      { error, userIdFromToken: jwtUser.id },
+      'Error fetching authenticated user details',
+    );
     throw error; // Let global error handler deal with unexpected errors
   }
 }
 
 // --- Controller for GET /api/auth/me/saved-events ---
-export async function getSavedEventsHandler(
-  request: AppFastifyRequest,
-  reply: AppFastifyReply
-) {
+export async function getSavedEventsHandler(request: AppFastifyRequest, reply: AppFastifyReply) {
   const authUser = request.user as AuthenticatedUser;
   request.log.info({ userId: authUser.id }, '--- ENTERING getSavedEventsHandler ---'); // Entry log
 
@@ -166,29 +195,48 @@ export async function getSavedEventsHandler(
         savedAt: 'desc',
       },
     });
-    request.log.info({ userId: authUser.id, relationsCount: savedEventsRelations.length }, 'Fetched savedEventsRelations.');
+    request.log.info(
+      { userId: authUser.id, relationsCount: savedEventsRelations.length },
+      'Fetched savedEventsRelations.',
+    );
 
     const eventsForApi = savedEventsRelations
-      .map(relation => {
+      .map((relation) => {
         if (!relation.event) {
-          request.log.warn({ savedEventUserId: relation.userId, savedEventEventId: relation.eventId }, 'UserSavedEvent found with a missing/null associated event. Skipping.');
+          request.log.warn(
+            { savedEventUserId: relation.userId, savedEventEventId: relation.eventId },
+            'UserSavedEvent found with a missing/null associated event. Skipping.',
+          );
           return null;
         }
         try {
           return transformEventForApi(relation.event as PrismaEventType);
         } catch (transformError) {
-          request.log.error({ savedEventUserId: relation.userId, savedEventEventId: relation.eventId, error: transformError }, 'Error transforming event in getSavedEventsHandler. Skipping.');
+          request.log.error(
+            {
+              savedEventUserId: relation.userId,
+              savedEventEventId: relation.eventId,
+              error: transformError,
+            },
+            'Error transforming event in getSavedEventsHandler. Skipping.',
+          );
           return null;
         }
       })
-      .filter(event => event !== null) as ApiEventResponse[];
-    request.log.info({ userId: authUser.id, eventsForApiCount: eventsForApi.length }, 'Constructed eventsForApi.');
+      .filter((event) => event !== null) as ApiEventResponse[];
+    request.log.info(
+      { userId: authUser.id, eventsForApiCount: eventsForApi.length },
+      'Constructed eventsForApi.',
+    );
 
     const responsePayload = { events: eventsForApi };
 
     return reply.code(200).send(responsePayload);
   } catch (error: unknown) {
-    request.log.error({ error, userId: authUser.id }, 'CRITICAL Error in getSavedEventsHandler outer catch block');
+    request.log.error(
+      { error, userId: authUser.id },
+      'CRITICAL Error in getSavedEventsHandler outer catch block',
+    );
     throw error; // Re-throw to be caught by global error handler
   }
 }
@@ -198,59 +246,85 @@ export async function getSavedEventsHandler(
 // The types should reflect the actual schema used (UpdateUserProfileInput for Body).
 export async function updateUserProfileHandler(
   request: AppFastifyRequest<{ Body: UpdateUserProfileInput }>,
-  reply: AppFastifyReply<{ Body: UpdateUserProfileInput }>
+  reply: AppFastifyReply<{ Body: UpdateUserProfileInput }>,
 ) {
   const authUser = request.user as AuthenticatedUser;
-  const { username, email } = request.body;
+  const dataToUpdate = request.body; // Use a consistent name for request.body
 
   try {
-    // REMOVE the following simpler, individual checks:
-    // if (username && username !== authUser.username) { ... }
-    // if (email) { ... }
+    // Check if there's anything to update
+    if (Object.keys(dataToUpdate).length === 0) {
+      request.log.info({ userId: authUser.id }, 'Profile update attempt with empty payload.');
+      // Optionally, return the current user profile or a specific message
+      // For now, let's assume the controller proceeds and Prisma handles empty data update gracefully
+      // Or, you could return a 200 with current data or 304 Not Modified, or 400 if it's an error
+      // Depending on desired behavior for empty payload.
+      // For this example, we'll let it proceed to the update logic,
+      // which will effectively do nothing if dataToUpdate is empty.
+      // A more robust approach might be:
+      // return reply.code(200).send({ message: "No changes provided." }); // Or send current user data
+    }
 
-    // KEEP the robust conflict check block:
-    if (username || email) { // Only check if at least one is provided
-      const orConditions: Prisma.UserWhereInput[] = [];
-      if (username) orConditions.push({ username });
-      if (email) orConditions.push({ email });
+    // Check for conflicts if username or email is being updated
+    let conflictQueryParts: Prisma.UserWhereInput[] = [];
+    if (dataToUpdate.username) {
+      conflictQueryParts.push({ username: dataToUpdate.username });
+    }
+    if (dataToUpdate.email) {
+      conflictQueryParts.push({ email: dataToUpdate.email });
+    }
 
-      if (orConditions.length > 0) {
-        const conflictingUser = await prisma.user.findFirst({
-          where: {
-            AND: [
-              { NOT: { id: authUser.id } },
-              { OR: orConditions }
-            ]
-          },
-        });
+    if (conflictQueryParts.length > 0) {
+      const conflictingUser = await prisma.user.findFirst({
+        where: {
+          AND: [{ NOT: { id: authUser.id } }, { OR: conflictQueryParts }],
+        },
+      });
 
-        if (conflictingUser) {
-          let conflictField = "username or email";
-          // Determine which field caused the conflict for a more specific message
-          if (username && conflictingUser.username === username && email && conflictingUser.email === email) {
-            conflictField = "username and email";
-          } else if (username && conflictingUser.username === username) {
-            conflictField = "username";
-          } else if (email && conflictingUser.email === email) {
-            conflictField = "email";
-          }
-          return reply.code(409).send({ message: `User with this ${conflictField} already exists.` });
+      if (conflictingUser) {
+        let conflictField = 'username or email'; // Default
+        let logDetails: any = { userId: authUser.id, conflictingUserId: conflictingUser.id };
+        let logMessage = 'Profile update failed: ';
+
+        const wantsToUpdateUsername = !!dataToUpdate.username;
+        const wantsToUpdateEmail = !!dataToUpdate.email;
+        const usernameConflict =
+          wantsToUpdateUsername && conflictingUser.username === dataToUpdate.username;
+        const emailConflict = wantsToUpdateEmail && conflictingUser.email === dataToUpdate.email;
+
+        if (usernameConflict && emailConflict) {
+          conflictField = 'username and email';
+          logDetails.requestedUsername = dataToUpdate.username;
+          logDetails.requestedEmail = dataToUpdate.email;
+          logMessage += 'Username and email already taken.';
+        } else if (usernameConflict) {
+          conflictField = 'username';
+          logDetails.requestedUsername = dataToUpdate.username;
+          logMessage += 'Username already taken.';
+        } else if (emailConflict) {
+          conflictField = 'email';
+          logDetails.requestedEmail = dataToUpdate.email;
+          logMessage += 'Email already taken.';
         }
+        // If only one field was requested for update, and it conflicted, the above will catch it.
+        // If both were requested, and only one conflicted, the above also handles it.
+
+        request.log.warn(logDetails, logMessage); // ADDED LOGGING
+        return reply.code(409).send({ message: `User with this ${conflictField} already exists.` });
       }
     }
 
+    // Proceed with update if no conflicts or no fields that need conflict checking were provided
     const updatedUserFromDb = await prisma.user.update({
       where: { id: authUser.id },
-      data: {
-        ...(username && { username }), // Only update if provided
-        ...(email && { email }),       // Only update if provided
-      },
+      data: dataToUpdate, // Pass the whole dataToUpdate object
       select: { id: true, username: true, email: true, createdAt: true, updatedAt: true },
     });
 
-    request.log.info({ userId: authUser.id, updatedFields: request.body }, 'User profile updated successfully.');
-    // If username/email changed, a new token reflecting these changes might be needed
-    // For simplicity, we're not re-issuing a token here, but consider it for real apps.
+    request.log.info(
+      { userId: authUser.id, updatedFields: dataToUpdate },
+      'User profile updated successfully.',
+    );
     return reply.code(200).send({
       id: updatedUserFromDb.id,
       username: updatedUserFromDb.username,
@@ -259,13 +333,24 @@ export async function updateUserProfileHandler(
       updatedAt: updatedUserFromDb.updatedAt.toISOString(),
     });
   } catch (error: unknown) {
-    request.log.error({ error, userId: authUser.id, body: request.body }, 'Error updating user profile');
-    if (error instanceof ZodError) { return reply.code(400).send({ message: "Validation error", errors: error.flatten().fieldErrors }); }
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-        request.log.warn({ userId: authUser.id, body: request.body, prismaCode: error.code }, 'Prisma unique constraint violation during profile update.');
-        return reply.code(409).send({ message: 'Username or email already taken.' });
+    request.log.error(
+      { error, userId: authUser.id, body: dataToUpdate },
+      'Error updating user profile',
+    );
+    if (error instanceof ZodError) {
+      return reply
+        .code(400)
+        .send({ message: 'Validation error', errors: error.flatten().fieldErrors });
     }
-    throw error; // For global error handler
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      request.log.warn(
+        { userId: authUser.id, body: dataToUpdate, prismaCode: error.code },
+        'Prisma unique constraint violation during profile update.',
+      );
+      // The P2002 message from Prisma is generic, so we provide a user-friendly one.
+      return reply.code(409).send({ message: 'Username or email already taken.' });
+    }
+    throw error;
   }
 }
 
@@ -273,7 +358,7 @@ export async function updateUserProfileHandler(
 // Note: The route is POST.
 export async function changePasswordHandler(
   request: AppFastifyRequest<{ Body: ChangePasswordInput }>,
-  reply: AppFastifyReply<{ Body: ChangePasswordInput }>
+  reply: AppFastifyReply<{ Body: ChangePasswordInput }>,
 ) {
   const authUser = request.user as AuthenticatedUser;
   const { currentPassword, newPassword } = request.body;
@@ -301,7 +386,11 @@ export async function changePasswordHandler(
     return reply.code(200).send({ message: 'Password changed successfully.' });
   } catch (error: unknown) {
     request.log.error({ error, userId: authUser.id }, 'Error changing user password');
-    if (error instanceof ZodError) { return reply.code(400).send({ message: "Validation error", errors: error.flatten().fieldErrors }); }
+    if (error instanceof ZodError) {
+      return reply
+        .code(400)
+        .send({ message: 'Validation error', errors: error.flatten().fieldErrors });
+    }
     throw error;
   }
 }

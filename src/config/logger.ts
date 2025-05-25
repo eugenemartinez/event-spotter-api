@@ -17,7 +17,8 @@ export const loggerOptions: FastifyServerOptions['logger'] = {
           colorize: true,
           translateTime: 'SYS:standard',
           ignore: 'pid,hostname,reqId,req,res,responseTime', // Adjusted to match your server.ts
-          messageFormat: '{reqId} {msg} {if err}Error: {err.message}{end}{if req}({req.method} {req.url}){end}{if res}({res.statusCode}){end} {if responseTime}- {responseTime}ms{end}', // Adjusted
+          messageFormat:
+            '{reqId} {msg} {if err}Error: {err.message}{end}{if req}({req.method} {req.url}){end}{if res}({res.statusCode}){end} {if responseTime}- {responseTime}ms{end}', // Adjusted
         },
       }
     : undefined,
@@ -33,7 +34,8 @@ export const loggerOptions: FastifyServerOptions['logger'] = {
         remotePort: request.socket?.remotePort,
       };
     },
-    res(reply: MinimalReply) { // Use the minimal reply type
+    res(reply: MinimalReply) {
+      // Use the minimal reply type
       return {
         statusCode: reply.statusCode,
       };
@@ -42,7 +44,7 @@ export const loggerOptions: FastifyServerOptions['logger'] = {
       return {
         type: error.name,
         message: error.message,
-        stack: isProduction ? '' : (error.stack || ''),
+        stack: isProduction ? '' : error.stack || '',
         code: error.code || '',
         statusCode: error.statusCode,
         validation: error.validation, // Make sure this aligns with FastifyError type

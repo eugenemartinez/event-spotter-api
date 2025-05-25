@@ -1,6 +1,7 @@
 import { ZodError } from 'zod';
 import prisma, { Prisma } from '../../lib/prisma';
 import {
+  createEventSchema, // Import the schema itself
   CreateEventInput,
   ApiEventResponse,
   EventParams,
@@ -32,16 +33,16 @@ export type PrismaEventType = Prisma.EventGetPayload<{
     websiteUrl: true;
     createdAt: true;
     updatedAt: true;
-  }
+  };
 }>;
 
 // Helper functions (these can also be in a separate utils file if used more broadly)
-const formatPrismaTime = (date: Date | null): string | null => {
+export const formatPrismaTime = (date: Date | null): string | null => {
   if (!date) return null;
   return date.toISOString().substring(11, 19);
 };
 
-const formatPrismaDate = (date: Date): string => {
+export const formatPrismaDate = (date: Date): string => {
   return date.toISOString().split('T')[0];
 };
 
@@ -89,16 +90,28 @@ export const commonEventSelect: Prisma.EventSelect = {
 // --- Controller for POST /api/events - Create a new event ---
 export async function createEventHandler(
   request: AppFastifyRequest<{ Body: CreateEventInput }>,
-  reply: AppFastifyReply<{ Body: CreateEventInput }>
+  reply: AppFastifyReply<{ Body: CreateEventInput }>,
 ) {
   const user = request.user as AuthenticatedUser;
-  const {
-    title, description, eventDate, eventTime,
-    locationDescription, category, tags, websiteUrl,
-  } = request.body;
-  const organizerNameToUse = request.body.organizerName || user.username;
 
   try {
+    // Explicitly parse and validate the body using the Zod schema
+    // This makes the controller robust even if Fastify's pre-validation is bypassed (like in unit tests)
+    // or if you want an extra layer of validation.
+    const validatedBody = createEventSchema.parse(request.body);
+
+    const {
+      title,
+      description,
+      eventDate,
+      eventTime,
+      locationDescription,
+      category,
+      tags,
+      websiteUrl,
+    } = validatedBody; // Use validatedBody from now on
+    const organizerNameToUse = validatedBody.organizerName || user.username;
+
     const prismaEventDate = new Date(eventDate);
     const prismaEventTime = timeStringToDate(eventTime);
 
@@ -112,18 +125,28 @@ export async function createEventHandler(
         locationDescription,
         organizerName: organizerNameToUse,
         category,
-        tags: tags || [],
+        tags: tags || [], // Zod schema defaults tags to [], so validatedBody.tags will exist
         websiteUrl,
       },
       select: commonEventSelect,
     });
-    request.log.info({ eventId: newEventFromDb.id, userId: user.id, title: newEventFromDb.title }, 'Event created successfully.');
+    request.log.info(
+      { eventId: newEventFromDb.id, userId: user.id, title: newEventFromDb.title },
+      'Event created successfully.',
+    );
     return reply.code(201).send(transformEventForApi(newEventFromDb));
   } catch (error: unknown) {
     request.log.error({ error, body: request.body, userId: user.id }, 'Error creating event');
-    if (error instanceof ZodError) { return reply.code(400).send({ message: "Validation error", errors: error.flatten().fieldErrors }); }
+    if (error instanceof ZodError) {
+      // This will now catch the error from createEventSchema.parse(request.body)
+      return reply
+        .code(400)
+        .send({ message: 'Validation error', errors: error.flatten().fieldErrors });
+    }
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      return reply.code(409).send({ message: "Conflict: An event with similar unique details might already exist." });
+      return reply
+        .code(409)
+        .send({ message: 'Conflict: An event with similar unique details might already exist.' });
     }
     return reply.code(500).send({ message: 'An error occurred while creating the event.' });
   }
@@ -132,7 +155,7 @@ export async function createEventHandler(
 // --- Controller for GET /api/events/:eventId ---
 export async function getEventByIdHandler(
   request: AppFastifyRequest<{ Params: EventParams }>,
-  reply: AppFastifyReply<{ Params: EventParams }>
+  reply: AppFastifyReply<{ Params: EventParams }>,
 ) {
   const { eventId } = request.params;
   try {
@@ -140,7 +163,9 @@ export async function getEventByIdHandler(
       where: { id: eventId },
       select: commonEventSelect,
     });
-    if (!eventFromDb) { return reply.code(404).send({ message: 'Event not found.' }); }
+    if (!eventFromDb) {
+      return reply.code(404).send({ message: 'Event not found.' });
+    }
     return reply.code(200).send(transformEventForApi(eventFromDb));
   } catch (error: unknown) {
     request.log.error({ error, eventId }, 'Error fetching event by ID');
@@ -151,22 +176,43 @@ export async function getEventByIdHandler(
 // --- Controller for GET /api/events - List all events ---
 export async function listEventsHandler(
   request: AppFastifyRequest<{ Querystring: EventListQuery }>,
-  reply: AppFastifyReply<{ Querystring: EventListQuery }>
+  reply: AppFastifyReply<{ Querystring: EventListQuery }>,
 ) {
-  const { page, limit, category, startDate, endDate, sortBy, sortOrder, search, tags: queryTags } = request.query;
+  const {
+    page,
+    limit,
+    category,
+    startDate,
+    endDate,
+    sortBy,
+    sortOrder,
+    search,
+    tags: queryTags,
+  } = request.query;
   let parsedTags: string[] | undefined = undefined;
   if (queryTags && typeof queryTags === 'string') {
-    parsedTags = queryTags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+    parsedTags = queryTags
+      .split(',')
+      .map((tag) => tag.trim())
+      .filter((tag) => tag.length > 0);
   }
 
   try {
     const skip = (page - 1) * limit;
     const whereConditions: Prisma.EventWhereInput[] = [];
 
-    if (category) { whereConditions.push({ category }); }
-    if (parsedTags && parsedTags.length > 0) { whereConditions.push({ tags: { hasSome: parsedTags } }); }
-    if (startDate) { whereConditions.push({ eventDate: { gte: new Date(startDate) } }); }
-    if (endDate) { whereConditions.push({ eventDate: { lte: new Date(endDate) } }); }
+    if (category) {
+      whereConditions.push({ category });
+    }
+    if (parsedTags && parsedTags.length > 0) {
+      whereConditions.push({ tags: { hasSome: parsedTags } });
+    }
+    if (startDate) {
+      whereConditions.push({ eventDate: { gte: new Date(startDate) } });
+    }
+    if (endDate) {
+      whereConditions.push({ eventDate: { lte: new Date(endDate) } });
+    }
     if (search) {
       whereConditions.push({
         OR: [
@@ -178,13 +224,14 @@ export async function listEventsHandler(
         ],
       });
     }
-    
-    const finalWhereClause: Prisma.EventWhereInput = whereConditions.length > 0 ? { AND: whereConditions } : {};
+
+    const finalWhereClause: Prisma.EventWhereInput =
+      whereConditions.length > 0 ? { AND: whereConditions } : {};
     const orderByClauseArray: Prisma.EventOrderByWithRelationInput[] = [];
     if (sortBy) {
-        orderByClauseArray.push({ [sortBy]: sortOrder });
+      orderByClauseArray.push({ [sortBy]: sortOrder });
     } else {
-        orderByClauseArray.push({ createdAt: 'desc' });
+      orderByClauseArray.push({ createdAt: 'desc' });
     }
 
     const [dbEvents, totalEvents] = await prisma.$transaction([
@@ -210,7 +257,11 @@ export async function listEventsHandler(
     });
   } catch (error: unknown) {
     request.log.error({ error, query: request.query }, 'Error fetching events');
-    if (error instanceof ZodError) { return reply.code(400).send({ message: "Validation error", errors: error.flatten().fieldErrors }); }
+    if (error instanceof ZodError) {
+      return reply
+        .code(400)
+        .send({ message: 'Validation error', errors: error.flatten().fieldErrors });
+    }
     return reply.code(500).send({ message: 'An error occurred while fetching events.' });
   }
 }
@@ -218,7 +269,7 @@ export async function listEventsHandler(
 // --- Controller for PATCH /api/events/:eventId ---
 export async function updateEventHandler(
   request: AppFastifyRequest<{ Params: EventParams; Body: UpdateEventInput }>,
-  reply: AppFastifyReply<{ Params: EventParams; Body: UpdateEventInput }>
+  reply: AppFastifyReply<{ Params: EventParams; Body: UpdateEventInput }>,
 ) {
   const user = request.user as AuthenticatedUser;
   const { eventId } = request.params;
@@ -227,26 +278,43 @@ export async function updateEventHandler(
   try {
     const eventToUpdate = await prisma.event.findUnique({ where: { id: eventId } });
     if (!eventToUpdate) {
-      request.log.info({ eventId, userId: user.id }, 'User attempted to update non-existent event.');
+      request.log.info(
+        { eventId, userId: user.id },
+        'User attempted to update non-existent event.',
+      );
       return reply.code(404).send({ message: 'Event not found.' });
     }
     if (eventToUpdate.userId !== user.id) {
-      request.log.warn({ eventId, eventOwnerId: eventToUpdate.userId, attemptingUserId: user.id }, 'User authorization failed: Attempt to update event they do not own.');
+      request.log.warn(
+        { eventId, eventOwnerId: eventToUpdate.userId, attemptingUserId: user.id },
+        'User authorization failed: Attempt to update event they do not own.',
+      );
       return reply.code(403).send({ message: 'You are not authorized to update this event.' });
     }
 
-    request.log.info({ eventId, userId: user.id, updateData: updateDataFromRequest }, 'User authorized and attempting to update event.');
+    request.log.info(
+      { eventId, userId: user.id, updateData: updateDataFromRequest },
+      'User authorized and attempting to update event.',
+    );
 
     const dataForPrisma: Prisma.EventUpdateInput = {};
-    if (updateDataFromRequest.title !== undefined) dataForPrisma.title = updateDataFromRequest.title;
-    if (updateDataFromRequest.description !== undefined) dataForPrisma.description = updateDataFromRequest.description;
-    if (updateDataFromRequest.eventDate !== undefined) dataForPrisma.eventDate = new Date(updateDataFromRequest.eventDate);
-    if (updateDataFromRequest.eventTime !== undefined) dataForPrisma.eventTime = timeStringToDate(updateDataFromRequest.eventTime);
-    if (updateDataFromRequest.locationDescription !== undefined) dataForPrisma.locationDescription = updateDataFromRequest.locationDescription;
-    if (updateDataFromRequest.organizerName !== undefined) dataForPrisma.organizerName = updateDataFromRequest.organizerName;
-    if (updateDataFromRequest.category !== undefined) dataForPrisma.category = updateDataFromRequest.category;
+    if (updateDataFromRequest.title !== undefined)
+      dataForPrisma.title = updateDataFromRequest.title;
+    if (updateDataFromRequest.description !== undefined)
+      dataForPrisma.description = updateDataFromRequest.description;
+    if (updateDataFromRequest.eventDate !== undefined)
+      dataForPrisma.eventDate = new Date(updateDataFromRequest.eventDate);
+    if (updateDataFromRequest.eventTime !== undefined)
+      dataForPrisma.eventTime = timeStringToDate(updateDataFromRequest.eventTime);
+    if (updateDataFromRequest.locationDescription !== undefined)
+      dataForPrisma.locationDescription = updateDataFromRequest.locationDescription;
+    if (updateDataFromRequest.organizerName !== undefined)
+      dataForPrisma.organizerName = updateDataFromRequest.organizerName;
+    if (updateDataFromRequest.category !== undefined)
+      dataForPrisma.category = updateDataFromRequest.category;
     if (updateDataFromRequest.tags !== undefined) dataForPrisma.tags = updateDataFromRequest.tags;
-    if (updateDataFromRequest.websiteUrl !== undefined) dataForPrisma.websiteUrl = updateDataFromRequest.websiteUrl;
+    if (updateDataFromRequest.websiteUrl !== undefined)
+      dataForPrisma.websiteUrl = updateDataFromRequest.websiteUrl;
 
     const updatedEventFromDb = await prisma.event.update({
       where: { id: eventId },
@@ -256,8 +324,15 @@ export async function updateEventHandler(
     request.log.info({ eventId, userId: user.id }, 'Event updated successfully by owner.');
     return reply.code(200).send(transformEventForApi(updatedEventFromDb));
   } catch (error: unknown) {
-    request.log.error({ error, eventId, updateData: updateDataFromRequest, userId: user.id }, 'Error updating event');
-    if (error instanceof ZodError) { return reply.code(400).send({ message: 'Validation error', errors: error.flatten().fieldErrors });}
+    request.log.error(
+      { error, eventId, updateData: updateDataFromRequest, userId: user.id },
+      'Error updating event',
+    );
+    if (error instanceof ZodError) {
+      return reply
+        .code(400)
+        .send({ message: 'Validation error', errors: error.flatten().fieldErrors });
+    }
     return reply.code(500).send({ message: 'An error occurred while updating the event.' });
   }
 }
@@ -265,7 +340,7 @@ export async function updateEventHandler(
 // --- Controller for DELETE /api/events/:eventId ---
 export async function deleteEventHandler(
   request: AppFastifyRequest<{ Params: EventParams }>,
-  reply: AppFastifyReply<{ Params: EventParams }>
+  reply: AppFastifyReply<{ Params: EventParams }>,
 ) {
   const user = request.user as AuthenticatedUser;
   const { eventId } = request.params;
@@ -273,16 +348,25 @@ export async function deleteEventHandler(
     const event = await prisma.event.findUnique({ where: { id: eventId } });
 
     if (!event) {
-      request.log.info({ eventId, userId: user.id }, 'User attempted to delete non-existent event.');
+      request.log.info(
+        { eventId, userId: user.id },
+        'User attempted to delete non-existent event.',
+      );
       return reply.code(404).send({ message: 'Event not found.' });
     }
 
     if (event.userId !== user.id) {
-      request.log.warn({ eventId, eventOwnerId: event.userId, attemptingUserId: user.id }, 'User authorization failed: Attempt to delete event they do not own.');
+      request.log.warn(
+        { eventId, eventOwnerId: event.userId, attemptingUserId: user.id },
+        'User authorization failed: Attempt to delete event they do not own.',
+      );
       return reply.code(403).send({ message: 'You are not authorized to delete this event.' });
     }
 
-    request.log.info({ eventId, userId: user.id }, 'User authorized and attempting to delete event.');
+    request.log.info(
+      { eventId, userId: user.id },
+      'User authorized and attempting to delete event.',
+    );
 
     await prisma.event.delete({ where: { id: eventId } });
     request.log.info({ eventId, userId: user.id }, 'Event deleted successfully by owner.');
@@ -296,42 +380,42 @@ export async function deleteEventHandler(
 // --- Controller for POST /api/events/:eventId/save ---
 export async function saveEventHandler(
   request: AppFastifyRequest<{ Params: EventParams }>,
-  reply: AppFastifyReply<{ Params: EventParams }>
+  reply: AppFastifyReply<{ Params: EventParams }>,
 ) {
   const user = request.user as AuthenticatedUser;
   const { eventId } = request.params;
   try {
     const eventExists = await prisma.event.count({ where: { id: eventId } });
-    if (!eventExists) return reply.code(404).send({ message: "Event not found." });
+    if (!eventExists) return reply.code(404).send({ message: 'Event not found.' });
 
     const existingSave = await prisma.userSavedEvent.findUnique({
-      where: { userId_eventId: { userId: user.id, eventId } }
+      where: { userId_eventId: { userId: user.id, eventId } },
     });
-    if (existingSave) return reply.code(200).send({ message: "Event already saved." });
+    if (existingSave) return reply.code(200).send({ message: 'Event already saved.' });
 
     await prisma.userSavedEvent.create({
-      data: { userId: user.id, eventId: eventId }
+      data: { userId: user.id, eventId: eventId },
     });
-    return reply.code(201).send({ message: "Event saved successfully." });
+    return reply.code(201).send({ message: 'Event saved successfully.' });
   } catch (error: unknown) {
     request.log.error({ error, eventId, userId: user.id }, 'Error saving event');
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
-         return reply.code(404).send({ message: "Event not found or user invalid." });
+      return reply.code(404).send({ message: 'Event not found or user invalid.' });
     }
-    return reply.code(500).send({ message: "An error occurred while saving the event." });
+    return reply.code(500).send({ message: 'An error occurred while saving the event.' });
   }
 }
 
 // --- Controller for DELETE /api/events/:eventId/save ---
 export async function unsaveEventHandler(
   request: AppFastifyRequest<{ Params: EventParams }>,
-  reply: AppFastifyReply<{ Params: EventParams }>
+  reply: AppFastifyReply<{ Params: EventParams }>,
 ) {
   const user = request.user as AuthenticatedUser;
   const { eventId } = request.params;
   try {
     await prisma.userSavedEvent.delete({
-      where: { userId_eventId: { userId: user.id, eventId: eventId } }
+      where: { userId_eventId: { userId: user.id, eventId: eventId } },
     });
     return reply.code(204).send();
   } catch (error: unknown) {
@@ -339,27 +423,30 @@ export async function unsaveEventHandler(
       // P2025 means "Record to delete not found." - this is okay for unsave, means it wasn't saved.
       // Depending on desired behavior, you could return 204 or a specific 404.
       // For idempotency, 204 is often preferred.
-      request.log.info({ eventId, userId: user.id }, 'User attempted to unsave an event that was not saved or already unsaved.');
+      request.log.info(
+        { eventId, userId: user.id },
+        'User attempted to unsave an event that was not saved or already unsaved.',
+      );
       return reply.code(204).send();
       // If you strictly want to indicate "it was not found to be unsaved", then 404:
       // return reply.code(404).send({ message: "Saved event not found for this user." });
     }
     request.log.error({ error, eventId, userId: user.id }, 'Error unsaving event');
-    return reply.code(500).send({ message: "An error occurred while unsaving the event." });
+    return reply.code(500).send({ message: 'An error occurred while unsaving the event.' });
   }
 }
 
 // --- Controller for GET /api/events/categories ---
 export async function getEventCategoriesHandler(
   _request: AppFastifyRequest, // No specific generics needed
-  reply: AppFastifyReply
+  reply: AppFastifyReply,
 ) {
   try {
     const distinctCategories = await prisma.event.findMany({
       select: { category: true },
       distinct: ['category'],
     });
-    const categories = distinctCategories.map(c => c.category).sort();
+    const categories = distinctCategories.map((c) => c.category).sort();
     return reply.code(200).send({ categories });
   } catch (error: unknown) {
     reply.log.error(error, 'Error fetching event categories'); // Use reply.log or request.log
@@ -368,20 +455,17 @@ export async function getEventCategoriesHandler(
 }
 
 // --- Controller for GET /api/events/tags ---
-export async function getEventTagsHandler(
-  _request: AppFastifyRequest,
-  reply: AppFastifyReply
-) {
+export async function getEventTagsHandler(_request: AppFastifyRequest, reply: AppFastifyReply) {
   try {
     const eventsWithTags = await prisma.event.findMany({
       select: { tags: true },
-      where: { tags: { isEmpty: false } }
+      where: { tags: { isEmpty: false } },
     });
-    const allTags = eventsWithTags.flatMap(e => e.tags);
+    const allTags = eventsWithTags.flatMap((e) => e.tags);
     // Corrected logic: trim, convert to consistent case (e.g., lowercase) for Set, then filter empty, then sort
-    const uniqueTags = [...new Set(allTags.map(tag => tag.trim().toLowerCase()))] // Convert to lowercase for uniqueness
-                        .filter(t => t !== "") // Filter out tags that became empty after trimming
-                        .sort();
+    const uniqueTags = [...new Set(allTags.map((tag) => tag.trim().toLowerCase()))] // Convert to lowercase for uniqueness
+      .filter((t) => t !== '') // Filter out tags that became empty after trimming
+      .sort();
 
     return reply.code(200).send({ tags: uniqueTags });
   } catch (error: unknown) {
@@ -393,7 +477,7 @@ export async function getEventTagsHandler(
 // --- Controller for POST /api/events/batch-get ---
 export async function batchGetEventsHandler(
   request: AppFastifyRequest<{ Body: BatchGetEventsBody }>,
-  reply: AppFastifyReply<{ Body: BatchGetEventsBody }>
+  reply: AppFastifyReply<{ Body: BatchGetEventsBody }>,
 ) {
   const { eventIds } = request.body;
   try {
@@ -405,19 +489,19 @@ export async function batchGetEventsHandler(
     return reply.code(200).send({ events: eventsForApi });
   } catch (error: unknown) {
     request.log.error({ error, eventIds }, 'Error in batch-get events');
-    return reply.code(500).send({ message: "An error occurred while fetching events." });
+    return reply.code(500).send({ message: 'An error occurred while fetching events.' });
   }
 }
 
 // --- Controller for GET /api/events/random ---
 export async function getRandomEventHandler(
   _request: AppFastifyRequest, // No specific generics needed
-  reply: AppFastifyReply
+  reply: AppFastifyReply,
 ) {
   try {
     const totalEvents = await prisma.event.count();
     if (totalEvents === 0) return reply.code(404).send({ message: 'No events found.' });
-    
+
     const randomSkip = Math.floor(Math.random() * totalEvents);
     // FindMany with skip/take can be inefficient for true random on large datasets
     // but is simple for smaller ones. Consider DB-specific random functions for optimization.
@@ -428,15 +512,15 @@ export async function getRandomEventHandler(
     });
 
     if (randomEvents.length === 0) {
-        // This case might happen if totalEvents changes between count and findMany, or if skip is exactly totalEvents
-        // Fallback to fetching the first event or any event if the random pick fails.
-        const firstEvent = await prisma.event.findFirst({ select: commonEventSelect });
-        if (!firstEvent) return reply.code(404).send({ message: 'No events found (fallback).' });
-        return reply.code(200).send(transformEventForApi(firstEvent));
+      // This case might happen if totalEvents changes between count and findMany, or if skip is exactly totalEvents
+      // Fallback to fetching the first event or any event if the random pick fails.
+      const firstEvent = await prisma.event.findFirst({ select: commonEventSelect });
+      if (!firstEvent) return reply.code(404).send({ message: 'No events found (fallback).' });
+      return reply.code(200).send(transformEventForApi(firstEvent));
     }
     return reply.code(200).send(transformEventForApi(randomEvents[0]));
   } catch (error: unknown) {
     reply.log.error({ error }, 'Error fetching random event');
-    return reply.code(500).send({ message: "An error occurred while fetching a random event." });
+    return reply.code(500).send({ message: 'An error occurred while fetching a random event.' });
   }
 }
