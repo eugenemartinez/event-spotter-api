@@ -1,0 +1,1554 @@
+openapi: 3.0.3
+info:
+  title: EventSpotter API
+  description: API documentation for the EventSpotter application.
+  version: 0.1.0 # Replace with your actual version, e.g., from package.json
+  contact:
+    name: API Support
+    # email: support@example.com # Optional
+
+servers:
+  - url: http://localhost:3000/api # Base URL for your API endpoints
+    description: Local development server
+  # You can add other servers like staging or production here
+  # - url: https://staging.api.eventspotter.com/api
+  #   description: Staging server
+
+tags:
+  - name: Auth
+    description: User authentication and management
+  - name: Events
+    description: Event listing, creation, and details
+  - name: Health # Added based on /ping route
+    description: API health checks
+  - name: User Profile # Added for /auth/me routes
+    description: Operations related to the authenticated user's profile
+  - name: User Saved Events # Added for /auth/me/saved-events
+    description: Operations related to events saved by the user
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'Enter JWT token in Bearer format (e.g., "Bearer <token>")'
+  schemas:
+    SuccessMessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      example:
+        message: "Operation successful."
+    # --- Auth Schemas Start ---
+    RegisterUserRequest:
+      type: object
+      description: Payload for registering a new user.
+      required:
+        - username
+        - email
+        - password
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+          pattern: '^[a-zA-Z0-9_]+$'
+          description: "The desired username for the new account. Must be unique." # From Zod
+          example: new_user_123
+        email:
+          type: string
+          format: email
+          description: "The email address for the new account. Must be unique." # From Zod
+          example: user@example.com
+        password:
+          type: string
+          minLength: 8
+          # maxLength: 100 # Zod schema doesn't have maxLength for password
+          description: "The password for the new account. Must be at least 8 characters." # From Zod
+          example: Str0ngP@sswOrd!
+      example: # From your auth.schemas.ts
+        username: 'testuser1'
+        email: 'testuser1@example.com'
+        password: 'Password123!'
+    LoginUserRequest:
+      type: object
+      description: Payload for user login. # From Zod
+      required:
+        - identifier # Changed from email to identifier
+        - password
+      properties:
+        identifier: # Changed from email to identifier
+          type: string
+          minLength: 1 # From Zod
+          description: "The user's email address or username." # From Zod
+          example: 'user@example.com' # or 'testuser1'
+        password:
+          type: string
+          minLength: 1 # From Zod
+          description: "The user's password." # From Zod
+          example: Str0ngP@sswOrd!
+      example:
+        identifier: 'user@example.com'
+        password: 'Password123!'
+    AuthSuccessResponse:
+      type: object
+      description: Response payload upon successful user registration or login. # From Zod
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: The unique identifier of the authenticated user. # From Zod
+          example: 'a1b2c3d4-e89b-12d3-a456-426614174000'
+        username:
+          type: string
+          description: The username of the authenticated user. # From Zod
+          example: 'testuser1'
+        email:
+          type: string
+          format: email
+          description: The email address of the authenticated user. # From Zod
+          example: 'testuser1@example.com'
+        token:
+          type: string
+          description: JWT authentication token for subsequent requests. # From Zod
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImExYjJjM2Q0LWU1ZjYtNzg5MC0xMjM0LTU2Nzg5MGFiY2RlZiIsInVzZXJuYW1lIjoidGVzdHVzZXIxIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c'
+      example: # From your auth.schemas.ts
+        id: 'a1b2c3d4-e89b-12d3-a456-426614174000'
+        username: 'testuser1'
+        email: 'testuser1@example.com'
+        token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImExYjJjM2Q0LWU1ZjYtNzg5MC0xMjM0LTU2Nzg5MGFiY2RlZiIsInVzZXJuYW1lIjoidGVzdHVzZXIxIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c'
+    ApiUserResponse:
+      type: object
+      description: Detailed profile information for a user. # From Zod
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: "User's unique identifier." # From Zod
+          example: 'b1c2d3e4-f5a6-7890-1234-567890abcdef'
+        username:
+          type: string
+          description: "User's username." # From Zod
+          example: 'currentuser'
+        email:
+          type: string
+          format: email
+          description: "User's email address." # From Zod
+          example: 'currentuser@example.com'
+        createdAt:
+          type: string
+          format: date-time
+          description: "Timestamp of user creation (ISO 8601 format)." # From Zod
+          example: '2024-05-25T12:00:00Z'
+        updatedAt:
+          type: string
+          format: date-time
+          description: "Timestamp of last user update (ISO 8601 format)." # From Zod
+          example: '2024-05-25T12:30:00Z'
+      example: # From your auth.schemas.ts (approximated date for static example)
+        id: 'b1c2d3e4-f5a6-7890-1234-567890abcdef'
+        username: 'currentuser'
+        email: 'currentuser@example.com'
+        createdAt: '2024-05-25T12:00:00Z'
+        updatedAt: '2024-05-25T12:30:00Z'
+    UpdateUserProfileRequest:
+      type: object
+      description: "Payload for updating the current user's profile information (username or email)." # From Zod
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: "The new username for the user. Must be unique if provided." # From Zod
+          example: "new_username_example"
+        email:
+          type: string
+          format: email
+          description: "The new email address for the user. Must be unique if provided." # From Zod
+          example: "new_email@example.com"
+      example: # From your auth.schemas.ts
+        username: "new_username_example"
+    ChangePasswordRequest:
+      type: object
+      description: "Payload for changing the current user's password." # From Zod
+      required:
+        - currentPassword
+        - newPassword
+      properties:
+        currentPassword:
+          type: string
+          minLength: 1
+          description: "The user's current password." # From Zod
+          example: "currentPasswordExample123"
+        newPassword:
+          type: string
+          minLength: 8
+          description: "The desired new password. Must be at least 8 characters." # From Zod
+          example: "newStrongPasswordExample456!"
+      example: # From your auth.schemas.ts
+        currentPassword: "currentPasswordExample123"
+        newPassword: "newStrongPasswordExample456!"
+    SavedEventsResponse:
+      type: object
+      description: "A list of events saved by the user." # From Zod
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiEventResponse' # Placeholder, will define ApiEventResponse later
+      example: # From your auth.schemas.ts
+        events:
+          - id: "event-uuid-1" # Example structure from your singleEventExamplePrd
+            userId: "user-uuid-for-event-1"
+            title: "Community BBQ"
+            description: "Join us for a fun community BBQ with games and food."
+            eventDate: "2025-06-01" # Example date
+            eventTime: "14:00:00"
+            locationDescription: "Central Park, near the fountain"
+            organizerName: "City Council Events Team"
+            category: "Community"
+            tags: ["food", "family-friendly", "outdoor"]
+            websiteUrl: "https://example.com/community-bbq"
+            createdAt: "2024-05-25T12:00:00Z" # Example date
+            updatedAt: "2024-05-25T12:30:00Z" # Example date
+    ApiEventResponse: # Replacing the placeholder
+      type: object
+      description: "Detailed information about an event." # From Zod
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: "The unique identifier for the event." # From Zod
+          example: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+        userId:
+          type: string
+          format: uuid
+          description: "The unique identifier of the user who created the event." # From Zod
+          example: "b1c2d3e4-f5a6-7890-1234-567890abcdef"
+        title:
+          type: string
+          description: "The title of the event." # From Zod
+          example: "Summer Music Festival"
+        description:
+          type: string
+          description: "A detailed description of the event." # From Zod
+          example: "Join us for a weekend of live music, food, and fun under the sun."
+        eventDate:
+          type: string
+          format: date # YYYY-MM-DD
+          description: "The date of the event (YYYY-MM-DD)." # From Zod
+          example: "2025-07-19"
+        eventTime:
+          type: string
+          # format: time # OpenAPI 'time' format is HH:mm:ss, Zod allows nullable
+          pattern: '^([01]\\d|2[0-3]):([0-5]\\d):([0-5]\\d)$' # HH:mm:ss
+          nullable: true
+          description: "The time of the event (HH:mm:ss). Nullable." # From Zod
+          example: "14:00:00"
+        locationDescription:
+          type: string
+          description: "A textual description of the event's location." # From Zod
+          example: "Main City Park, Downtown"
+        organizerName:
+          type: string
+          description: "The name of the event organizer." # From Zod
+          example: "City Events Co."
+        category:
+          type: string
+          description: "The category of the event." # From Zod
+          example: "Music"
+        tags:
+          type: array
+          items:
+            type: string
+          description: "An array of tags associated with the event." # From Zod
+          example: ["live music", "festival", "outdoor", "family friendly"]
+        websiteUrl:
+          type: string
+          format: url
+          nullable: true
+          description: "The official website URL for the event. Nullable." # From Zod
+          example: "https://summermusicfest.example.com"
+        createdAt:
+          type: string
+          format: date-time
+          description: "Timestamp of event creation." # From Zod
+          example: "2024-05-20T10:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: "Timestamp of last event update." # From Zod
+          example: "2024-05-21T11:30:00Z"
+      example: # Example for a full event object
+        id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+        userId: "b1c2d3e4-f5a6-7890-1234-567890abcdef"
+        title: "Tech Conference 2025"
+        description: "Annual conference for tech enthusiasts and professionals."
+        eventDate: "2025-09-15"
+        eventTime: "09:00:00"
+        locationDescription: "Convention Center, Hall A"
+        organizerName: "TechMinds Inc."
+        category: "Technology"
+        tags: ["conference", "networking", "innovation"]
+        websiteUrl: "https://techconf2025.example.com"
+        createdAt: "2024-04-01T08:00:00Z"
+        updatedAt: "2024-04-05T16:45:00Z"
+
+    CreateEventRequest:
+      type: object
+      description: "Payload for creating a new event." # From Zod
+      required: # Based on your Zod schema (excluding optional/defaulted fields)
+        - title
+        - description
+        - eventDate
+        - locationDescription
+        - category
+      properties:
+        title:
+          type: string
+          minLength: 3
+          maxLength: 255
+          description: "Title must be at least 3 characters long." # From Zod
+          example: "Annual Charity Run"
+        description:
+          type: string
+          minLength: 10
+          description: "Description must be at least 10 characters long." # From Zod
+          example: "Join us for our 5th annual charity run to support local schools."
+        eventDate:
+          type: string
+          format: date # YYYY-MM-DD
+          description: "eventDate must be a valid date string in YYYY-MM-DD format." # From Zod
+          example: "2025-10-05"
+        eventTime:
+          type: string
+          pattern: '^([01]\\d|2[0-3]):([0-5]\\d)(:([0-5]\\d))?$' # HH:mm or HH:mm:ss
+          nullable: true # From Zod .nullable().optional()
+          description: "eventTime must be a valid time string in HH:mm or HH:mm:ss format. Optional." # From Zod
+          example: "08:30:00"
+        locationDescription:
+          type: string
+          minLength: 1
+          description: "Location description cannot be empty." # From Zod
+          example: "Riverside Park, starting at the North Gate"
+        organizerName:
+          type: string
+          minLength: 1
+          maxLength: 100
+          # Not in 'required' as it's optional in Zod
+          description: "The name of the event organizer. If omitted, the event creator's username will be used." # From Zod
+          example: "Community First Org"
+        category:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: "Category cannot be empty." # From Zod
+          example: "Charity"
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          description: "Each tag must be at most 50 characters long. Optional, defaults to []." # From Zod
+          example: ["running", "charity", "community", "health"]
+        websiteUrl:
+          type: string
+          format: url
+          maxLength: 2048
+          nullable: true # From Zod .nullable().optional()
+          description: "Invalid URL format for website. Optional." # From Zod
+          example: "https://charityrun.example.org"
+      example:
+        title: "Art Workshop for Beginners"
+        description: "Learn the basics of acrylic painting in a fun and relaxed environment."
+        eventDate: "2025-08-10"
+        eventTime: "13:00:00"
+        locationDescription: "Community Art Studio, Room 3"
+        category: "Arts & Crafts"
+        tags: ["painting", "workshop", "art"]
+        websiteUrl: "https://artworkshop.example.com"
+
+    UpdateEventRequest:
+      type: object
+      description: "Payload for updating an existing event. At least one field must be provided." # From Zod
+      # No 'required' at the top level, as all fields are optional for PATCH.
+      # The Zod .refine for at least one field is a business logic rule, harder to express directly in OpenAPI schema structure
+      # but can be mentioned in the description.
+      properties:
+        title:
+          type: string
+          minLength: 3
+          maxLength: 255
+          description: "Title must be at least 3 characters long."
+          example: "Updated Charity Run Title"
+        description:
+          type: string
+          minLength: 10
+          description: "Description must be at least 10 characters long."
+          example: "An updated description for our annual charity run."
+        eventDate:
+          type: string
+          format: date
+          description: "eventDate must be a valid date string in YYYY-MM-DD format."
+          example: "2025-10-06"
+        eventTime:
+          type: string
+          pattern: '^([01]\\d|2[0-3]):([0-5]\\d)(:([0-5]\\d))?$'
+          nullable: true
+          description: "eventTime must be a valid time string in HH:mm or HH:mm:ss format."
+          example: "09:00:00"
+        locationDescription:
+          type: string
+          minLength: 1
+          description: "Location description cannot be empty."
+          example: "New Location: City Hall Plaza"
+        organizerName:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: "The name of the event organizer."
+          example: "Updated Organizer Name"
+        category:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: "Category cannot be empty."
+          example: "Sports"
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          description: "Each tag must be at most 50 characters long."
+          example: ["updated tag", "fitness"]
+        websiteUrl:
+          type: string
+          format: url
+          maxLength: 2048
+          nullable: true
+          description: "Invalid URL format for website."
+          example: "https://updatedcharityrun.example.org"
+      example:
+        title: "Advanced Art Workshop"
+        eventTime: "14:00" # Example of providing only a few fields
+
+    PaginatedEventsResponse:
+      type: object
+      description: "A paginated list of events." # From Zod
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiEventResponse'
+        totalEvents:
+          type: integer
+          format: int32 # Or int64 if numbers can be very large
+          example: 150
+        totalPages:
+          type: integer
+          format: int32
+          example: 15
+        currentPage:
+          type: integer
+          format: int32
+          example: 1
+        limit:
+          type: integer
+          format: int32
+          example: 10
+      example:
+        events:
+          # Include 1-2 ApiEventResponse examples here or reference one
+          - $ref: '#/components/schemas/ApiEventResponse/example'
+        totalEvents: 2
+        totalPages: 1
+        currentPage: 1
+        limit: 10
+
+    EventCategoriesResponse:
+      type: object
+      description: "A list of unique event categories." # From Zod
+      properties:
+        categories:
+          type: array
+          items:
+            type: string
+          example: ["Music", "Technology", "Sports", "Arts & Crafts", "Community"]
+      example:
+        categories: ["Music", "Technology", "Community"]
+
+    EventTagsResponse:
+      type: object
+      description: "A list of unique event tags." # From Zod
+      properties:
+        tags:
+          type: array
+          items:
+            type: string
+          example: ["live music", "conference", "running", "workshop", "family-friendly"]
+      example:
+        tags: ["tech", "api", "nodejs"]
+
+    BatchGetEventsBodyRequest: # Renamed from BatchGetEventsBody to align with *Request convention
+      type: object
+      description: "Payload for retrieving multiple events by their IDs." # From Zod
+      required:
+        - eventIds
+      properties:
+        eventIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+            description: "Each event ID must be a valid UUID." # From Zod message
+          minItems: 1 # From Zod .min(1)
+          description: "At least one event ID must be provided." # From Zod message
+          example: ["a1b2c3d4-e5f6-7890-1234-567890abcdef", "b1c2d3e4-f5a6-7890-1234-567890abcdef"]
+      example:
+        eventIds: ["a1b2c3d4-e5f6-7890-1234-567890abcdef"]
+
+    BatchGetEventsResponse:
+      type: object
+      description: "A list of events retrieved by their IDs." # From Zod
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiEventResponse'
+      example:
+        events:
+          - $ref: '#/components/schemas/ApiEventResponse/example' # Reference the example of ApiEventResponse
+
+    # --- Specific Error Schemas from event.schemas.ts ---
+    ErrorResponse400:
+      type: object
+      description: "Bad Request: Validation error or invalid input." # From Zod
+      properties:
+        message:
+          type: string
+          example: "Validation error"
+        errors: # Specific to ZodError .flatten().fieldErrors
+          type: object # Can be more specific if you know the structure of fieldErrors
+          additionalProperties: # Allows for any field name with an array of strings
+            type: array
+            items:
+              type: string
+          example:
+            title: ["Title must be at least 3 characters long"]
+            eventDate: ["eventDate must be a valid date string in YYYY-MM-DD format"]
+    ErrorResponse401:
+      type: object
+      description: "Unauthorized: Authentication is required and has failed or has not yet been provided." # From Zod
+      properties:
+        message:
+          type: string
+          example: "Unauthorized"
+    ErrorResponse403:
+      type: object
+      description: "Forbidden: The server understood the request, but is refusing to fulfill it." # From Zod
+      properties:
+        message:
+          type: string
+          example: "You are not authorized to perform this action."
+    ErrorResponse404:
+      type: object
+      description: "Not Found: The requested resource could not be found." # From Zod
+      properties:
+        message:
+          type: string
+          example: "Resource not found."
+    ErrorResponse409:
+      type: object
+      description: "Conflict: The request could not be completed due to a conflict with the current state of the resource." # From Zod
+      properties:
+        message:
+          type: string
+          example: "Conflict: Item already exists."
+    ErrorResponse500:
+      type: object
+      description: "Internal Server Error: A generic error message, given when an unexpected condition was encountered." # From Zod
+      properties:
+        message:
+          type: string
+          example: "An internal server error occurred."
+
+    # --- Event Schemas End ---
+paths:
+  /ping:
+    get:
+      tags:
+        - Health
+      summary: Responds with pong
+      description: A simple ping endpoint to check API health.
+      operationId: pingServer
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessageResponse' # Using SuccessMessageResponse
+              example:
+                message: "pong" # Actual example from your route
+  # --- Auth Paths Start ---
+  /auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Register a new user
+      description: Creates a new user account.
+      operationId: registerUser
+      requestBody:
+        description: User registration details
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterUserRequest'
+            examples: # Adding request body examples
+              default:
+                value:
+                  username: 'testuser_reg'
+                  email: 'testuser_reg@example.com'
+                  password: 'Password123!'
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSuccessResponse'
+              examples:
+                default:
+                  value: # From your authSuccessResponseExample
+                    id: 'a1b2c3d4-e89b-12d3-a456-426614174000'
+                    username: 'testuser1'
+                    email: 'testuser1@example.com'
+                    token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImExYjJjM2Q0LWU1ZjYtNzg5MC0xMjM0LTU2Nzg5MGFiY2RlZiIsInVzZXJuYW1lIjoidGVzdHVzZXIxIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c'
+        '400': # From your auth.routes.ts
+          description: Invalid input data (validation error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse400' # Corrected
+              examples:
+                validationError:
+                  value:
+                    message: "Validation error: Username must be at least 3 characters long"
+                    errors: # Example of Zod-like field errors
+                      username: ["Username must be at least 3 characters long"]
+        '409': # From your auth.routes.ts
+          description: User already exists (username or email conflict)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse409' # Corrected
+              examples:
+                conflictError:
+                  value:
+                    message: "User with this username or email already exists"
+        '500': # From your auth.routes.ts
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse500' # Corrected
+              examples:
+                default:
+                  value:
+                    message: "An unexpected error occurred during registration."
+                    error: "Internal Server Error"
+                    statusCode: 500
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Log in an existing user
+      description: Authenticates a user and returns a JWT token.
+      operationId: loginUser
+      requestBody:
+        description: User login credentials
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginUserRequest'
+            examples:
+              default:
+                value:
+                  identifier: 'testuser1@example.com'
+                  password: 'Password123!'
+      responses:
+        '200': # From your auth.routes.ts
+          description: User logged in successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSuccessResponse'
+              examples:
+                default:
+                  value: # From your authSuccessResponseExample
+                    id: 'a1b2c3d4-e89b-12d3-a456-426614174000'
+                    username: 'testuser1'
+                    email: 'testuser1@example.com'
+                    token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImExYjJjM2Q0LWU1ZjYtNzg5MC0xMjM0LTU2Nzg5MGFiY2RlZiIsInVzZXJuYW1lIjoidGVzdHVzZXIxIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c'
+        '400': # From your auth.routes.ts
+          description: Invalid input data (e.g., missing fields)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse400' # Corrected (assuming 400 for login validation)
+              examples:
+                missingFields:
+                  value:
+                    message: "Identifier and password are required."
+                    errors:
+                      identifier: ["Identifier is required"]
+        '401': # From your auth.routes.ts
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse401' # Corrected
+              examples:
+                invalidCredentials:
+                  value:
+                    message: "Invalid credentials"
+        '500': # From your auth.routes.ts
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse500' # Corrected
+              examples:
+                default:
+                  value:
+                    message: "An unexpected error occurred during login."
+                    error: "Internal Server Error"
+                    statusCode: 500
+  # --- Auth Paths End ---
+  # --- User Profile Paths will start here ---
+  /auth/me:
+    get:
+      tags:
+        - User Profile
+        - Auth
+      summary: Get current authenticated user's profile
+      description: Retrieves the profile information of the currently authenticated user.
+      operationId: getAuthenticatedUserProfile
+      security:
+        - bearerAuth: [] # Indicates this endpoint requires Bearer token authentication
+      responses:
+        '200':
+          description: Successfully retrieved user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiUserResponse'
+              examples:
+                default:
+                  value: # From your apiUserResponseExample
+                    id: 'b1c2d3e4-f5a6-7890-1234-567890abcdef'
+                    username: 'currentuser'
+                    email: 'currentuser@example.com'
+                    createdAt: '2024-05-25T12:00:00Z'
+                    updatedAt: '2024-05-25T12:30:00Z'
+        '401': # From your auth.routes.ts
+          description: Unauthorized (token missing, invalid, or expired)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse401' # Corrected
+              examples:
+                unauthorized:
+                  value:
+                    message: "Unauthorized"
+        '404': # From your auth.routes.ts
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse404' # Corrected
+              examples:
+                notFound:
+                  value:
+                    message: "User not found"
+        '500': # From your auth.routes.ts
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse500' # Corrected
+  patch:
+      tags:
+        - User Profile
+        - Auth
+      summary: Update current authenticated user's profile
+      description: Allows updating the username and/or email of the currently authenticated user. At least one field (username or email) must be provided.
+      operationId: updateUserProfile
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: User profile details to update.
+        required: true # Even if fields are optional, the body itself is required for a PATCH.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserProfileRequest'
+            examples:
+              updateUsername:
+                summary: Update only username
+                value:
+                  username: "new_username_example"
+              updateEmail:
+                summary: Update only email
+                value:
+                  email: "new_email@example.com"
+              updateBoth:
+                summary: Update both username and email
+                value:
+                  username: "another_new_username"
+                  email: "another_new_email@example.com"
+      responses:
+        '200':
+          description: User profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiUserResponse' # Returns the updated user profile
+              examples:
+                default:
+                  value: # Example of an updated user
+                    id: 'b1c2d3e4-f5a6-7890-1234-567890abcdef'
+                    username: 'new_username_example'
+                    email: 'currentuser@example.com' # Assuming only username was updated in this example
+                    createdAt: '2024-05-25T12:00:00Z'
+                    updatedAt: '2024-05-25T13:00:00Z' # Updated time
+        '400': # From your auth.routes.ts
+          description: Invalid input data (validation error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse400' # Corrected
+              examples:
+                validationError:
+                  value:
+                    message: "Validation error: Username must be at least 3 characters long"
+                    errors:
+                      username: ["Username must be at least 3 characters long"]
+        '401': # From your auth.routes.ts
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse401' # Corrected
+        '409': # From your auth.routes.ts
+          description: Conflict (e.g., new username or email already taken)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse409' # Corrected
+              examples:
+                conflictError:
+                  value:
+                    message: "User with this username or email already exists"
+        '500': # From your auth.routes.ts
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse500' # Corrected
+  /auth/me/password:
+    post:
+      tags:
+        - User Profile
+        - Auth
+      summary: Change current authenticated user's password
+      description: Allows the authenticated user to change their password by providing their current password and a new password.
+      operationId: changeUserPassword
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: Current and new password details.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+            examples:
+              default:
+                value: # From your changePasswordRequestExample
+                  currentPassword: "currentPasswordExample123"
+                  newPassword: "newStrongPasswordExample456!"
+      responses:
+        '200': # From your auth.routes.ts
+          description: Password updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessageResponse'
+              examples:
+                default:
+                  value:
+                    message: "Password changed successfully."
+        '400': # From your auth.routes.ts (e.g. new password too short)
+          description: Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse400' # Corrected
+              examples:
+                validationError:
+                  value:
+                    message: "Validation error: New password must be at least 8 characters long"
+                    errors:
+                      newPassword: ["New password must be at least 8 characters long"]
+        '401': # From your auth.routes.ts (e.g. current password incorrect)
+          description: Unauthorized (e.g., current password incorrect)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse401' # Corrected
+              examples:
+                invalidCurrentPassword:
+                  value:
+                    message: "Invalid current password."
+        '404': # Added based on controller logic
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse404'
+              examples:
+                userNotFound:
+                  value:
+                    message: "User not found."
+        '500': # From your auth.routes.ts
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse500' # Corrected
+  /auth/me/saved-events:
+    get:
+      tags:
+        - User Saved Events
+        - Auth
+      summary: Get events saved by the current user
+      description: Retrieves a list of events that the currently authenticated user has saved.
+      operationId: getSavedEventsForUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200': # From your auth.routes.ts
+          description: Successfully retrieved saved events
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SavedEventsResponse'
+              examples:
+                default:
+                  value:
+                    events:
+                      - $ref: '#/components/schemas/ApiEventResponse/example' # Preferred way to reference
+                      # Or, a more complete inline example if preferred over $ref to another example:
+                      # - id: "event-uuid-1"
+                      #   userId: "user-uuid-for-event-1"
+                      #   title: "Community BBQ"
+                      #   description: "Join us for a fun community BBQ with games and food."
+                      #   eventDate: "2025-06-01"
+                      #   eventTime: "14:00:00"
+                      #   locationDescription: "Central Park, near the fountain"
+                      #   organizerName: "City Council Events Team"
+                      #   category: "Community"
+                      #   tags: ["food", "family-friendly", "outdoor"]
+                      #   websiteUrl: "https://example.com/community-bbq"
+                      #   createdAt: "2024-05-25T12:00:00Z"
+                      #   updatedAt: "2024-05-25T12:30:00Z"
+        '401': # From your auth.routes.ts
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse401' # Corrected
+              examples: # Added example for 401
+                unauthorized:
+                  value:
+                    message: "Unauthorized"
+        '500': # From your auth.routes.ts
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse500' # Corrected
+              examples: # Added example for 500
+                default:
+                  value:
+                    message: "An error occurred while fetching saved events."
+  # --- User Profile Paths End ---
+  # --- Event Paths Start ---
+  /events:
+    post:
+      tags:
+        - Events
+      summary: Create a new event
+      description: Creates a new event with the provided details. Requires authentication.
+      operationId: createEvent
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: Event details for creation.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEventRequest'
+            examples:
+              default:
+                value:
+                  title: "Community Cleanup Day"
+                  description: "Join us to help clean up our local park and make our community greener."
+                  eventDate: "2025-09-21"
+                  eventTime: "09:00:00"
+                  locationDescription: "Willow Creek Park - Meet at the main entrance"
+                  category: "Community Service"
+                  tags: ["volunteer", "environment", "community"]
+                  websiteUrl: "https://communitycleanup.example.org"
+      responses:
+        '201':
+          description: Event created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEventResponse'
+              examples:
+                default:
+                  $ref: '#/components/schemas/ApiEventResponse/example' # Reference the example from ApiEventResponse
+        '400':
+          description: Invalid input data (validation error).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse400' # Using specific error schema
+              examples:
+                validationError:
+                  value:
+                    message: "Validation error"
+                    errors:
+                      title: ["Title must be at least 3 characters long"]
+        '401':
+          description: Unauthorized (authentication required).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse401'
+        '409':
+          description: Conflict (e.g., an event with similar unique details might already exist).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse409'
+              examples:
+                conflictError:
+                  value:
+                    message: "Conflict: An event with similar unique details might already exist."
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse500'
+    get:
+      tags:
+        - Events
+      summary: List all events
+      description: Retrieves a paginated list of events. Supports filtering, sorting, and searching.
+      operationId: listEvents
+      parameters: # Query parameters based on eventListQuerySchema
+        - name: page
+          in: query
+          description: Page number for pagination.
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          description: Number of events per page.
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+        - name: category
+          in: query
+          description: Filter events by category.
+          required: false
+          schema:
+            type: string
+        - name: tags
+          in: query
+          description: Comma-separated list of tags to filter by (e.g., 'tag1,tag2,tag3').
+          required: false
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          description: Filter events on or after this date (inclusive, YYYY-MM-DD).
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          description: Filter events on or before this date (inclusive, YYYY-MM-DD).
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: sortBy
+          in: query
+          description: Field to sort events by.
+          required: false
+          schema:
+            type: string
+            enum: ['eventDate', 'title', 'createdAt', 'organizerName', 'category']
+            default: 'createdAt'
+        - name: sortOrder
+          in: query
+          description: Order to sort events by.
+          required: false
+          schema:
+            type: string
+            enum: ['asc', 'desc']
+            default: 'desc'
+        - name: search
+          in: query
+          description: Search term for title, description, location, organizer, or category.
+          required: false
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        '200':
+          description: A paginated list of events.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedEventsResponse'
+              examples:
+                default:
+                  $ref: '#/components/schemas/PaginatedEventsResponse/example'
+        '400':
+          description: Invalid query parameters.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse400'
+              examples:
+                validationError:
+                  value:
+                    message: "Validation error"
+                    errors:
+                      limit: ["Number must be less than or equal to 100"]
+                      endDate: ["endDate cannot be before startDate"]
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse500'
+  /events/{eventId}: # New path for specific event operations
+    get:
+      tags:
+        - Events
+      summary: Get a single event by ID
+      description: Retrieves detailed information for a specific event by its UUID.
+      operationId: getEventById
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          description: The UUID of the event to retrieve.
+          schema:
+            type: string
+            format: uuid # Based on your eventParamsSchema
+      responses:
+        '200':
+          description: Successfully retrieved event details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEventResponse'
+              examples:
+                default:
+                  $ref: '#/components/schemas/ApiEventResponse/example'
+        '400':
+          description: Invalid event ID format.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse400'
+              examples:
+                invalidUuid:
+                  value:
+                    message: "Validation error"
+                    errors:
+                      eventId: ["Event ID must be a valid UUID"]
+        '404':
+          description: Event not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse404'
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse500'
+    patch:
+      tags:
+        - Events
+      summary: Update an existing event
+      description: Updates specified fields of an existing event. Requires authentication and ownership of the event.
+      operationId: updateEvent
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          description: The UUID of the event to update.
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        description: Event details to update. At least one field must be provided.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEventRequest'
+            examples:
+              updateTitleAndDate:
+                value:
+                  title: "Updated Annual Gala Dinner"
+                  eventDate: "2025-11-15"
+      responses:
+        '200':
+          description: Event updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEventResponse' # Returns the updated event
+              examples:
+                default:
+                  $ref: '#/components/schemas/ApiEventResponse/example' # Example of an updated event
+        '400':
+          description: Invalid input data (validation error for body or event ID).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse400'
+        '401':
+          description: Unauthorized (authentication required).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse401'
+        '403':
+          description: Forbidden (user is not the owner of the event).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse403'
+        '404':
+          description: Event not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse404'
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse500'
+    delete:
+      tags:
+        - Events
+      summary: Delete an event
+      description: Deletes an event by its UUID. Requires authentication and ownership of the event.
+      operationId: deleteEvent
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          description: The UUID of the event to delete.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Event deleted successfully. No content returned.
+          # No content for 204 response
+        '401':
+          description: Unauthorized (authentication required).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse401'
+        '403':
+          description: Forbidden (user is not the owner of the event).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse403'
+        '404':
+          description: Event not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse404'
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse500'
+  /events/{eventId}/save: # New path for saving/unsaving events
+    post:
+      tags:
+        - Events
+        - User Saved Events # Also relates to user's saved events
+      summary: Save an event
+      description: Allows an authenticated user to save an event to their list of saved events.
+      operationId: saveEventForUser
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          description: The UUID of the event to save.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '201': # Based on your event.routes.ts
+          description: Event saved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessageResponse'
+              examples:
+                default:
+                  value:
+                    message: "Event saved successfully."
+        '200': # Based on your event.routes.ts for "already saved"
+          description: Event was already saved by the user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessageResponse'
+              examples:
+                alreadySaved:
+                  value:
+                    message: "Event already saved."
+        '400':
+          description: Invalid event ID format.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse400'
+        '401':
+          description: Unauthorized (authentication required).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse401'
+        '404':
+          description: Event not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse404'
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse500'
+    delete:
+      tags:
+        - Events
+        - User Saved Events # Also relates to user's saved events
+      summary: Unsave an event
+      description: Allows an authenticated user to remove an event from their list of saved events.
+      operationId: unsaveEventForUser
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          description: The UUID of the event to unsave.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204': # Based on your event.routes.ts
+          description: Event unsaved successfully or was not saved. No content returned.
+        '400':
+          description: Invalid event ID format.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse400'
+        '401':
+          description: Unauthorized (authentication required).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse401'
+        '404':
+          description: Event not found (or was not saved by the user, leading to a state where it can't be "unsaved" from their list if P2025 is handled as 404 by controller).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse404'
+              examples:
+                notFound: # Example if the event itself doesn't exist
+                  value:
+                    message: "Event not found."
+                notSaved: # Example if the event exists but wasn't saved by this user
+                  value:
+                    message: "Saved event not found for this user." # This depends on controller logic for P2025
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse500'
+  /events/categories:
+    get:
+      tags:
+        - Events
+      summary: Get all unique event categories
+      description: Retrieves a list of all unique categories present in the events.
+      operationId: getEventCategories
+      responses:
+        '200':
+          description: Successfully retrieved event categories.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventCategoriesResponse'
+              examples:
+                default:
+                  $ref: '#/components/schemas/EventCategoriesResponse/example'
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse500'
+  /events/tags:
+    get:
+      tags:
+        - Events
+      summary: Get all unique event tags
+      description: Retrieves a list of all unique tags present across all events.
+      operationId: getEventTags
+      responses:
+        '200':
+          description: Successfully retrieved event tags.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventTagsResponse'
+              examples:
+                default:
+                  $ref: '#/components/schemas/EventTagsResponse/example'
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse500'
+  /events/batch-get:
+    post:
+      tags:
+        - Events
+      summary: Retrieve multiple events by their IDs
+      description: Fetches a list of events based on an array of provided event UUIDs.
+      operationId: batchGetEvents
+      requestBody:
+        description: A list of event UUIDs to retrieve.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchGetEventsBodyRequest' # Corrected name
+            examples:
+              default:
+                $ref: '#/components/schemas/BatchGetEventsBodyRequest/example'
+      responses:
+        '200':
+          description: Successfully retrieved events.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchGetEventsResponse'
+              examples:
+                default:
+                  $ref: '#/components/schemas/BatchGetEventsResponse/example'
+        '400':
+          description: Invalid input data (e.g., empty array, invalid UUIDs).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse400'
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse500'
+  /events/random:
+    get:
+      tags:
+        - Events
+      summary: Get a single random event
+      description: Retrieves a single event chosen randomly from the database.
+      operationId: getRandomEvent
+      responses:
+        '200':
+          description: Successfully retrieved a random event.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEventResponse'
+              examples:
+                default:
+                  $ref: '#/components/schemas/ApiEventResponse/example'
+        '404':
+          description: No events found in the database.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse404'
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse500'
+  # --- Event Paths End ---

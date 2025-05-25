@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EventSpotter API Portal</title>
+    <style>
+        :root {
+            --bg-primary: #0F172A; /* slate-900 */
+            --bg-secondary: #1E293B; /* slate-800 */
+            --text-primary: #E2E8F0; /* slate-200 */
+            --text-secondary: #94A3B8; /* slate-400 */
+            --text-muted: #64748B; /* slate-500 */
+            --accent-primary: #0EA5E9; /* sky-500 */
+            --accent-primary-hover: #0284C7; /* sky-600 */
+            --link-color: #38BDF8; /* sky-400 for links */
+            --link-color-hover: #7DD3FC; /* sky-300 for link hover */
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            line-height: 1.6;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            overflow: hidden; /* Hide scrollbars during initial animation if content is too tall */
+        }
+
+        .container {
+            background-color: var(--bg-secondary);
+            padding: 40px 50px;
+            border-radius: 12px; /* Increased border-radius */
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3), 0 6px 10px rgba(0,0,0,0.2); /* More pronounced shadow */
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+            opacity: 0; /* Start hidden for animation */
+            transform: translateY(30px) scale(0.98); /* Start slightly down and scaled for animation */
+            animation: fadeInUp 0.8s 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; /* Delay animation slightly */
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        h1 {
+            color: var(--text-primary);
+            font-size: 2.5em; /* Larger font size */
+            font-weight: 700; /* Bolder */
+            margin-bottom: 20px;
+            letter-spacing: -0.025em; /* Subtle letter spacing */
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideInText 0.6s 0.7s ease-out forwards;
+        }
+
+        p {
+            font-size: 1.1em;
+            color: var(--text-secondary);
+            margin-bottom: 25px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideInText 0.6s 0.9s ease-out forwards;
+        }
+
+        p.intro {
+             font-size: 1.2em;
+             margin-bottom: 30px;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background-color: var(--accent-primary);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1em;
+            transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideInText 0.6s 1.1s ease-out forwards;
+            margin-bottom: 20px; /* Add some space below the main CTA */
+        }
+
+        .cta-button:hover {
+            background-color: var(--accent-primary-hover);
+            transform: translateY(-2px); /* Subtle lift on hover */
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+
+        .github-link-container {
+            margin-top: 10px; /* Space above the GitHub link */
+            margin-bottom: 30px; /* Space below the GitHub link */
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideInText 0.6s 1.3s ease-out forwards; /* New animation delay */
+        }
+
+        .github-link-container a {
+            color: var(--link-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s ease-in-out;
+        }
+
+        .github-link-container a:hover {
+            color: var(--link-color-hover);
+            text-decoration: underline;
+        }
+
+
+        @keyframes slideInText {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .footer {
+            margin-top: 40px;
+            font-size: 0.9em;
+            color: var(--text-muted);
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideInText 0.6s 1.5s ease-out forwards; /* Adjusted delay for footer */
+        }
+    </style>
+    <!-- Consider adding a modern font like Inter from Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1>EventSpotter API</h1>
+        <p class="intro">Your central hub for managing and discovering amazing events.</p>
+        <p>
+            Explore the API endpoints and interact with live documentation:
+        </p>
+        <a href="/documentation" class="cta-button">View API Documentation</a>
+
+        <div class="github-link-container">
+            <p>
+                View the source code on <a href="https://github.com/eugenemartinez/event-spotter-api" target="_blank" rel="noopener noreferrer">GitHub</a>.
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>&copy; <span id="currentYear"></span> EventSpotter API. All rights reserved.</p>
+        </div>
+    </div>
+    <script>
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+    </script>
+</body>
+</html>

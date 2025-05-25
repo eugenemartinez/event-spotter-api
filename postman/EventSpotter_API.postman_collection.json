@@ -1,0 +1,3836 @@
+{
+	"info": {
+		"_postman_id": "1ad257e0-756e-472e-a3e8-e16af9a0791a",
+		"name": "EventSpotter API",
+		"description": "API documentation for the EventSpotter application.\n\nContact Support:\n Name: API Support",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "44210027"
+	},
+	"item": [
+		{
+			"name": "ping",
+			"item": [
+				{
+					"name": "Responds with pong",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/ping",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"ping"
+							]
+						},
+						"description": "A simple ping endpoint to check API health."
+					},
+					"response": [
+						{
+							"name": "Successful response",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/ping",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"ping"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"message\": \"pong\"\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "auth",
+			"item": [
+				{
+					"name": "register",
+					"item": [
+						{
+							"name": "Register a new user",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// Check if the request was successful (e.g., 201 Created)",
+											"if (pm.response.code === 201) {",
+											"    try {",
+											"        // Parse the response body as JSON",
+											"        const responseBody = pm.response.json();",
+											"",
+											"        // Check if the token exists in the response",
+											"        if (responseBody.token) {",
+											"            pm.environment.set(\"authToken\", responseBody.token);",
+											"            console.log(\"Auth Token set to environment variable: \" + responseBody.token);",
+											"        } else {",
+											"            console.log(\"Auth Token not found in response.\");",
+											"        }",
+											"",
+											"        // Check if user details exist",
+											"        if (responseBody.user && responseBody.user.id) {",
+											"            pm.environment.set(\"registeredUserId\", responseBody.user.id);",
+											"            console.log(\"Registered User ID set to environment variable: \" + responseBody.user.id);",
+											"        } else {",
+											"            console.log(\"User ID not found in response.\");",
+											"        }",
+											"",
+											"        if (responseBody.user && responseBody.user.username) {",
+											"            pm.environment.set(\"registeredUsername\", responseBody.user.username);",
+											"            console.log(\"Registered Username set to environment variable: \" + responseBody.user.username);",
+											"        }",
+											"",
+											"        if (responseBody.user && responseBody.user.email) {",
+											"            pm.environment.set(\"registeredEmail\", responseBody.user.email);",
+											"            console.log(\"Registered Email set to environment variable: \" + responseBody.user.email);",
+											"        }",
+											"",
+											"    } catch (e) {",
+											"        console.log(\"Error parsing response or setting variables: \" + e);",
+											"    }",
+											"} else {",
+											"    console.log(\"Registration request was not successful. Status code: \" + pm.response.code);",
+											"    // Optionally, clear variables if registration fails and they might hold old values",
+											"    // pm.environment.unset(\"authToken\");",
+											"    // pm.environment.unset(\"registeredUserId\");",
+											"}"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"username\": \"testuser21\",\n  \"email\": \"testuser21@example.com\",\n  \"password\": \"Password123!\"\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/auth/register",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"auth",
+										"register"
+									]
+								},
+								"description": "Creates a new user account."
+							},
+							"response": [
+								{
+									"name": "User registered successfully",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"username\": \"testuser1\",\n  \"email\": \"testuser1@example.com\",\n  \"password\": \"Password123!\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/auth/register",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"auth",
+												"register"
+											]
+										}
+									},
+									"status": "Created",
+									"code": 201,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"id\": \"a1b2c3d4-e89b-12d3-a456-426614174000\",\n  \"username\": \"testuser1\",\n  \"email\": \"testuser1@example.com\",\n  \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImExYjJjM2Q0LWU1ZjYtNzg5MC0xMjM0LTU2Nzg5MGFiY2RlZiIsInVzZXJuYW1lIjoidGVzdHVzZXIxIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c\"\n}"
+								},
+								{
+									"name": "Invalid input data (validation error)",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"username\": \"testuser1\",\n  \"email\": \"testuser1@example.com\",\n  \"password\": \"Password123!\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/auth/register",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"auth",
+												"register"
+											]
+										}
+									},
+									"status": "Bad Request",
+									"code": 400,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"message\": \"Validation error: Username must be at least 3 characters long\",\n  \"errors\": {\n    \"username\": [\n      \"Username must be at least 3 characters long\"\n    ]\n  }\n}"
+								},
+								{
+									"name": "User already exists (username or email conflict)",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"username\": \"testuser1\",\n  \"email\": \"testuser1@example.com\",\n  \"password\": \"Password123!\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/auth/register",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"auth",
+												"register"
+											]
+										}
+									},
+									"status": "Conflict",
+									"code": 409,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"message\": \"User with this username or email already exists\"\n}"
+								},
+								{
+									"name": "Internal server error",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"username\": \"testuser1\",\n  \"email\": \"testuser1@example.com\",\n  \"password\": \"Password123!\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/auth/register",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"auth",
+												"register"
+											]
+										}
+									},
+									"status": "Internal Server Error",
+									"code": 500,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"message\": \"An unexpected error occurred during registration.\",\n  \"error\": \"Internal Server Error\",\n  \"statusCode\": 500\n}"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "login",
+					"item": [
+						{
+							"name": "Log in an existing user",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"identifier\": \"user@example.com\",\n  \"password\": \"Password123!\"\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/auth/login",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"auth",
+										"login"
+									]
+								},
+								"description": "Authenticates a user and returns a JWT token."
+							},
+							"response": [
+								{
+									"name": "User logged in successfully",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"identifier\": \"user@example.com\",\n  \"password\": \"Password123!\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/auth/login",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"auth",
+												"login"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"id\": \"a1b2c3d4-e89b-12d3-a456-426614174000\",\n  \"username\": \"testuser1\",\n  \"email\": \"testuser1@example.com\",\n  \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImExYjJjM2Q0LWU1ZjYtNzg5MC0xMjM0LTU2Nzg5MGFiY2RlZiIsInVzZXJuYW1lIjoidGVzdHVzZXIxIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c\"\n}"
+								},
+								{
+									"name": "Invalid input data (e.g., missing fields)",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"identifier\": \"user@example.com\",\n  \"password\": \"Password123!\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/auth/login",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"auth",
+												"login"
+											]
+										}
+									},
+									"status": "Bad Request",
+									"code": 400,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"message\": \"Identifier and password are required.\",\n  \"errors\": {\n    \"identifier\": [\n      \"Identifier is required\"\n    ]\n  }\n}"
+								},
+								{
+									"name": "Invalid credentials",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"identifier\": \"user@example.com\",\n  \"password\": \"Password123!\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/auth/login",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"auth",
+												"login"
+											]
+										}
+									},
+									"status": "Unauthorized",
+									"code": 401,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"message\": \"Invalid credentials\"\n}"
+								},
+								{
+									"name": "Internal server error",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"identifier\": \"user@example.com\",\n  \"password\": \"Password123!\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/auth/login",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"auth",
+												"login"
+											]
+										}
+									},
+									"status": "Internal Server Error",
+									"code": 500,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"message\": \"An unexpected error occurred during login.\",\n  \"error\": \"Internal Server Error\",\n  \"statusCode\": 500\n}"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "me",
+					"item": [
+						{
+							"name": "password",
+							"item": [
+								{
+									"name": "Change current authenticated user's password",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{bearerToken}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"currentPassword\": \"currentPasswordExample123\",\n  \"newPassword\": \"newStrongPasswordExample456!\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/auth/me/password",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"auth",
+												"me",
+												"password"
+											]
+										},
+										"description": "Allows the authenticated user to change their password by providing their current password and a new password."
+									},
+									"response": [
+										{
+											"name": "Password updated successfully",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"currentPassword\": \"currentPasswordExample123\",\n  \"newPassword\": \"newStrongPasswordExample456!\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/auth/me/password",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"auth",
+														"me",
+														"password"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"message\": \"Operation successful.\"\n}"
+										},
+										{
+											"name": "Invalid input data",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"currentPassword\": \"currentPasswordExample123\",\n  \"newPassword\": \"newStrongPasswordExample456!\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/auth/me/password",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"auth",
+														"me",
+														"password"
+													]
+												}
+											},
+											"status": "Bad Request",
+											"code": 400,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"message\": \"Validation error: New password must be at least 8 characters long\",\n  \"errors\": {\n    \"newPassword\": [\n      \"New password must be at least 8 characters long\"\n    ]\n  }\n}"
+										},
+										{
+											"name": "Unauthorized (e.g., current password incorrect)",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"currentPassword\": \"currentPasswordExample123\",\n  \"newPassword\": \"newStrongPasswordExample456!\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/auth/me/password",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"auth",
+														"me",
+														"password"
+													]
+												}
+											},
+											"status": "Unauthorized",
+											"code": 401,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"message\": \"Invalid current password.\"\n}"
+										},
+										{
+											"name": "User not found",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"currentPassword\": \"currentPasswordExample123\",\n  \"newPassword\": \"newStrongPasswordExample456!\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/auth/me/password",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"auth",
+														"me",
+														"password"
+													]
+												}
+											},
+											"status": "Not Found",
+											"code": 404,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"message\": \"User not found.\"\n}"
+										},
+										{
+											"name": "Internal server error",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"currentPassword\": \"currentPasswordExample123\",\n  \"newPassword\": \"newStrongPasswordExample456!\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/auth/me/password",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"auth",
+														"me",
+														"password"
+													]
+												}
+											},
+											"status": "Internal Server Error",
+											"code": 500,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"message\": \"An internal server error occurred.\"\n}"
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "saved-events",
+							"item": [
+								{
+									"name": "Get events saved by the current user",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{bearerToken}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/auth/me/saved-events",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"auth",
+												"me",
+												"saved-events"
+											]
+										},
+										"description": "Retrieves a list of events that the currently authenticated user has saved."
+									},
+									"response": [
+										{
+											"name": "Successfully retrieved saved events",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/auth/me/saved-events",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"auth",
+														"me",
+														"saved-events"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"events\": [\n    {\n      \"id\": \"event-uuid-1\",\n      \"userId\": \"user-uuid-for-event-1\",\n      \"title\": \"Community BBQ\",\n      \"description\": \"Join us for a fun community BBQ with games and food.\",\n      \"eventDate\": \"2025-06-01\",\n      \"eventTime\": \"14:00:00\",\n      \"locationDescription\": \"Central Park, near the fountain\",\n      \"organizerName\": \"City Council Events Team\",\n      \"category\": \"Community\",\n      \"tags\": [\n        \"food\",\n        \"family-friendly\",\n        \"outdoor\"\n      ],\n      \"websiteUrl\": \"https://example.com/community-bbq\",\n      \"createdAt\": \"2024-05-25T12:00:00Z\",\n      \"updatedAt\": \"2024-05-25T12:30:00Z\"\n    }\n  ]\n}"
+										},
+										{
+											"name": "Unauthorized",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/auth/me/saved-events",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"auth",
+														"me",
+														"saved-events"
+													]
+												}
+											},
+											"status": "Unauthorized",
+											"code": 401,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"message\": \"Unauthorized\"\n}"
+										},
+										{
+											"name": "Internal server error",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/auth/me/saved-events",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"auth",
+														"me",
+														"saved-events"
+													]
+												}
+											},
+											"status": "Internal Server Error",
+											"code": 500,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"message\": \"An error occurred while fetching saved events.\"\n}"
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "Get current authenticated user's profile",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{bearerToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/auth/me",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"auth",
+										"me"
+									]
+								},
+								"description": "Retrieves the profile information of the currently authenticated user."
+							},
+							"response": [
+								{
+									"name": "Successfully retrieved user profile",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/auth/me",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"auth",
+												"me"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"id\": \"b1c2d3e4-f5a6-7890-1234-567890abcdef\",\n  \"username\": \"currentuser\",\n  \"email\": \"currentuser@example.com\",\n  \"createdAt\": \"2024-05-25T12:00:00Z\",\n  \"updatedAt\": \"2024-05-25T12:30:00Z\"\n}"
+								},
+								{
+									"name": "Unauthorized (token missing, invalid, or expired)",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/auth/me",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"auth",
+												"me"
+											]
+										}
+									},
+									"status": "Unauthorized",
+									"code": 401,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"message\": \"Unauthorized\"\n}"
+								},
+								{
+									"name": "User not found",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/auth/me",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"auth",
+												"me"
+											]
+										}
+									},
+									"status": "Not Found",
+									"code": 404,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"message\": \"User not found\"\n}"
+								},
+								{
+									"name": "Internal server error",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/auth/me",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"auth",
+												"me"
+											]
+										}
+									},
+									"status": "Internal Server Error",
+									"code": 500,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"message\": \"An internal server error occurred.\"\n}"
+								}
+							]
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "events",
+			"item": [
+				{
+					"name": "{eventId}",
+					"item": [
+						{
+							"name": "save",
+							"item": [
+								{
+									"name": "Save an event",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{bearerToken}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "POST",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/events/:eventId/save",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"events",
+												":eventId",
+												"save"
+											],
+											"variable": [
+												{
+													"key": "eventId",
+													"value": "f4f5b239-aa5f-eb9b-f04f-b101715e6927",
+													"description": "(Required) The UUID of the event to save."
+												}
+											]
+										},
+										"description": "Allows an authenticated user to save an event to their list of saved events."
+									},
+									"response": [
+										{
+											"name": "Event was already saved by the user.",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/events/:eventId/save",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"events",
+														":eventId",
+														"save"
+													],
+													"variable": [
+														{
+															"key": "eventId"
+														}
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"message\": \"Operation successful.\"\n}"
+										},
+										{
+											"name": "Event saved successfully.",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/events/:eventId/save",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"events",
+														":eventId",
+														"save"
+													],
+													"variable": [
+														{
+															"key": "eventId"
+														}
+													]
+												}
+											},
+											"status": "Created",
+											"code": 201,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"message\": \"Operation successful.\"\n}"
+										},
+										{
+											"name": "Invalid event ID format.",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/events/:eventId/save",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"events",
+														":eventId",
+														"save"
+													],
+													"variable": [
+														{
+															"key": "eventId"
+														}
+													]
+												}
+											},
+											"status": "Bad Request",
+											"code": 400,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"message\": \"Validation error\",\n  \"errors\": {\n    \"title\": [\n      \"Title must be at least 3 characters long\"\n    ],\n    \"eventDate\": [\n      \"eventDate must be a valid date string in YYYY-MM-DD format\"\n    ]\n  }\n}"
+										},
+										{
+											"name": "Unauthorized (authentication required).",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/events/:eventId/save",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"events",
+														":eventId",
+														"save"
+													],
+													"variable": [
+														{
+															"key": "eventId"
+														}
+													]
+												}
+											},
+											"status": "Unauthorized",
+											"code": 401,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"message\": \"Unauthorized\"\n}"
+										},
+										{
+											"name": "Event not found.",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/events/:eventId/save",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"events",
+														":eventId",
+														"save"
+													],
+													"variable": [
+														{
+															"key": "eventId"
+														}
+													]
+												}
+											},
+											"status": "Not Found",
+											"code": 404,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"message\": \"Resource not found.\"\n}"
+										},
+										{
+											"name": "Internal server error.",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/events/:eventId/save",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"events",
+														":eventId",
+														"save"
+													],
+													"variable": [
+														{
+															"key": "eventId"
+														}
+													]
+												}
+											},
+											"status": "Internal Server Error",
+											"code": 500,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"message\": \"An internal server error occurred.\"\n}"
+										}
+									]
+								},
+								{
+									"name": "Unsave an event",
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{bearerToken}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "DELETE",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/events/:eventId/save",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"events",
+												":eventId",
+												"save"
+											],
+											"variable": [
+												{
+													"key": "eventId",
+													"value": "f4f5b239-aa5f-eb9b-f04f-b101715e6927",
+													"description": "(Required) The UUID of the event to unsave."
+												}
+											]
+										},
+										"description": "Allows an authenticated user to remove an event from their list of saved events."
+									},
+									"response": [
+										{
+											"name": "Event unsaved successfully or was not saved. No content returned.",
+											"originalRequest": {
+												"method": "DELETE",
+												"header": [
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/events/:eventId/save",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"events",
+														":eventId",
+														"save"
+													],
+													"variable": [
+														{
+															"key": "eventId"
+														}
+													]
+												}
+											},
+											"status": "No Content",
+											"code": 204,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": ""
+										},
+										{
+											"name": "Invalid event ID format.",
+											"originalRequest": {
+												"method": "DELETE",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/events/:eventId/save",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"events",
+														":eventId",
+														"save"
+													],
+													"variable": [
+														{
+															"key": "eventId"
+														}
+													]
+												}
+											},
+											"status": "Bad Request",
+											"code": 400,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"message\": \"Validation error\",\n  \"errors\": {\n    \"title\": [\n      \"Title must be at least 3 characters long\"\n    ],\n    \"eventDate\": [\n      \"eventDate must be a valid date string in YYYY-MM-DD format\"\n    ]\n  }\n}"
+										},
+										{
+											"name": "Unauthorized (authentication required).",
+											"originalRequest": {
+												"method": "DELETE",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/events/:eventId/save",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"events",
+														":eventId",
+														"save"
+													],
+													"variable": [
+														{
+															"key": "eventId"
+														}
+													]
+												}
+											},
+											"status": "Unauthorized",
+											"code": 401,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"message\": \"Unauthorized\"\n}"
+										},
+										{
+											"name": "notFound",
+											"originalRequest": {
+												"method": "DELETE",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/events/:eventId/save",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"events",
+														":eventId",
+														"save"
+													],
+													"variable": [
+														{
+															"key": "eventId"
+														}
+													]
+												}
+											},
+											"status": "Not Found",
+											"code": 404,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"message\": \"Event not found.\"\n}"
+										},
+										{
+											"name": "notSaved",
+											"originalRequest": {
+												"method": "DELETE",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/events/:eventId/save",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"events",
+														":eventId",
+														"save"
+													],
+													"variable": [
+														{
+															"key": "eventId"
+														}
+													]
+												}
+											},
+											"status": "Not Found",
+											"code": 404,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"message\": \"Saved event not found for this user.\"\n}"
+										},
+										{
+											"name": "Internal server error.",
+											"originalRequest": {
+												"method": "DELETE",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/events/:eventId/save",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"events",
+														":eventId",
+														"save"
+													],
+													"variable": [
+														{
+															"key": "eventId"
+														}
+													]
+												}
+											},
+											"status": "Internal Server Error",
+											"code": 500,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"message\": \"An internal server error occurred.\"\n}"
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "Get a single event by ID",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/events/:eventId",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"events",
+										":eventId"
+									],
+									"variable": [
+										{
+											"key": "eventId",
+											"value": "f4f5b239-aa5f-eb9b-f04f-b101715e6927",
+											"description": "(Required) The UUID of the event to retrieve."
+										}
+									]
+								},
+								"description": "Retrieves detailed information for a specific event by its UUID."
+							},
+							"response": [
+								{
+									"name": "Successfully retrieved event details.",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/events/:eventId",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"events",
+												":eventId"
+											],
+											"variable": [
+												{
+													"key": "eventId"
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"id\": \"a1b2c3d4-e5f6-7890-1234-567890abcdef\",\n  \"userId\": \"b1c2d3e4-f5a6-7890-1234-567890abcdef\",\n  \"title\": \"Tech Conference 2025\",\n  \"description\": \"Annual conference for tech enthusiasts and professionals.\",\n  \"eventDate\": \"2025-09-15\",\n  \"eventTime\": \"09:00:00\",\n  \"locationDescription\": \"Convention Center, Hall A\",\n  \"organizerName\": \"TechMinds Inc.\",\n  \"category\": \"Technology\",\n  \"tags\": [\n    \"conference\",\n    \"networking\",\n    \"innovation\"\n  ],\n  \"websiteUrl\": \"https://techconf2025.example.com\",\n  \"createdAt\": \"2024-04-01T08:00:00Z\",\n  \"updatedAt\": \"2024-04-05T16:45:00Z\"\n}"
+								},
+								{
+									"name": "Invalid event ID format.",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/events/:eventId",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"events",
+												":eventId"
+											],
+											"variable": [
+												{
+													"key": "eventId"
+												}
+											]
+										}
+									},
+									"status": "Bad Request",
+									"code": 400,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"message\": \"Validation error\",\n  \"errors\": {\n    \"eventId\": [\n      \"Event ID must be a valid UUID\"\n    ]\n  }\n}"
+								},
+								{
+									"name": "Event not found.",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/events/:eventId",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"events",
+												":eventId"
+											],
+											"variable": [
+												{
+													"key": "eventId"
+												}
+											]
+										}
+									},
+									"status": "Not Found",
+									"code": 404,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"message\": \"Resource not found.\"\n}"
+								},
+								{
+									"name": "Internal server error.",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/events/:eventId",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"events",
+												":eventId"
+											],
+											"variable": [
+												{
+													"key": "eventId"
+												}
+											]
+										}
+									},
+									"status": "Internal Server Error",
+									"code": 500,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"message\": \"An internal server error occurred.\"\n}"
+								}
+							]
+						},
+						{
+							"name": "Update an existing event",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{bearerToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"title\": \"Advanced Art Workshop\",\n  \"eventTime\": \"14:00\"\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/events/:eventId",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"events",
+										":eventId"
+									],
+									"variable": [
+										{
+											"key": "eventId",
+											"value": "f4f5b239-aa5f-eb9b-f04f-b101715e6927",
+											"description": "(Required) The UUID of the event to update."
+										}
+									]
+								},
+								"description": "Updates specified fields of an existing event. Requires authentication and ownership of the event."
+							},
+							"response": [
+								{
+									"name": "Event updated successfully.",
+									"originalRequest": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"title\": \"Advanced Art Workshop\",\n  \"eventTime\": \"14:00\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/events/:eventId",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"events",
+												":eventId"
+											],
+											"variable": [
+												{
+													"key": "eventId"
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"id\": \"a1b2c3d4-e5f6-7890-1234-567890abcdef\",\n  \"userId\": \"b1c2d3e4-f5a6-7890-1234-567890abcdef\",\n  \"title\": \"Tech Conference 2025\",\n  \"description\": \"Annual conference for tech enthusiasts and professionals.\",\n  \"eventDate\": \"2025-09-15\",\n  \"eventTime\": \"09:00:00\",\n  \"locationDescription\": \"Convention Center, Hall A\",\n  \"organizerName\": \"TechMinds Inc.\",\n  \"category\": \"Technology\",\n  \"tags\": [\n    \"conference\",\n    \"networking\",\n    \"innovation\"\n  ],\n  \"websiteUrl\": \"https://techconf2025.example.com\",\n  \"createdAt\": \"2024-04-01T08:00:00Z\",\n  \"updatedAt\": \"2024-04-05T16:45:00Z\"\n}"
+								},
+								{
+									"name": "Invalid input data (validation error for body or event ID).",
+									"originalRequest": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"title\": \"Advanced Art Workshop\",\n  \"eventTime\": \"14:00\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/events/:eventId",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"events",
+												":eventId"
+											],
+											"variable": [
+												{
+													"key": "eventId"
+												}
+											]
+										}
+									},
+									"status": "Bad Request",
+									"code": 400,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"message\": \"Validation error\",\n  \"errors\": {\n    \"title\": [\n      \"Title must be at least 3 characters long\"\n    ],\n    \"eventDate\": [\n      \"eventDate must be a valid date string in YYYY-MM-DD format\"\n    ]\n  }\n}"
+								},
+								{
+									"name": "Unauthorized (authentication required).",
+									"originalRequest": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"title\": \"Advanced Art Workshop\",\n  \"eventTime\": \"14:00\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/events/:eventId",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"events",
+												":eventId"
+											],
+											"variable": [
+												{
+													"key": "eventId"
+												}
+											]
+										}
+									},
+									"status": "Unauthorized",
+									"code": 401,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"message\": \"Unauthorized\"\n}"
+								},
+								{
+									"name": "Forbidden (user is not the owner of the event).",
+									"originalRequest": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"title\": \"Advanced Art Workshop\",\n  \"eventTime\": \"14:00\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/events/:eventId",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"events",
+												":eventId"
+											],
+											"variable": [
+												{
+													"key": "eventId"
+												}
+											]
+										}
+									},
+									"status": "Forbidden",
+									"code": 403,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"message\": \"You are not authorized to perform this action.\"\n}"
+								},
+								{
+									"name": "Event not found.",
+									"originalRequest": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"title\": \"Advanced Art Workshop\",\n  \"eventTime\": \"14:00\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/events/:eventId",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"events",
+												":eventId"
+											],
+											"variable": [
+												{
+													"key": "eventId"
+												}
+											]
+										}
+									},
+									"status": "Not Found",
+									"code": 404,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"message\": \"Resource not found.\"\n}"
+								},
+								{
+									"name": "Internal server error.",
+									"originalRequest": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"title\": \"Advanced Art Workshop\",\n  \"eventTime\": \"14:00\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/events/:eventId",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"events",
+												":eventId"
+											],
+											"variable": [
+												{
+													"key": "eventId"
+												}
+											]
+										}
+									},
+									"status": "Internal Server Error",
+									"code": 500,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"message\": \"An internal server error occurred.\"\n}"
+								}
+							]
+						},
+						{
+							"name": "Delete an event",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{bearerToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/events/:eventId",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"events",
+										":eventId"
+									],
+									"variable": [
+										{
+											"key": "eventId",
+											"value": "f4f5b239-aa5f-eb9b-f04f-b101715e6927",
+											"description": "(Required) The UUID of the event to delete."
+										}
+									]
+								},
+								"description": "Deletes an event by its UUID. Requires authentication and ownership of the event."
+							},
+							"response": [
+								{
+									"name": "Event deleted successfully. No content returned.",
+									"originalRequest": {
+										"method": "DELETE",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/events/:eventId",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"events",
+												":eventId"
+											],
+											"variable": [
+												{
+													"key": "eventId"
+												}
+											]
+										}
+									},
+									"status": "No Content",
+									"code": 204,
+									"_postman_previewlanguage": "text",
+									"header": [],
+									"cookie": [],
+									"body": ""
+								},
+								{
+									"name": "Unauthorized (authentication required).",
+									"originalRequest": {
+										"method": "DELETE",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/events/:eventId",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"events",
+												":eventId"
+											],
+											"variable": [
+												{
+													"key": "eventId"
+												}
+											]
+										}
+									},
+									"status": "Unauthorized",
+									"code": 401,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"message\": \"Unauthorized\"\n}"
+								},
+								{
+									"name": "Forbidden (user is not the owner of the event).",
+									"originalRequest": {
+										"method": "DELETE",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/events/:eventId",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"events",
+												":eventId"
+											],
+											"variable": [
+												{
+													"key": "eventId"
+												}
+											]
+										}
+									},
+									"status": "Forbidden",
+									"code": 403,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"message\": \"You are not authorized to perform this action.\"\n}"
+								},
+								{
+									"name": "Event not found.",
+									"originalRequest": {
+										"method": "DELETE",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/events/:eventId",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"events",
+												":eventId"
+											],
+											"variable": [
+												{
+													"key": "eventId"
+												}
+											]
+										}
+									},
+									"status": "Not Found",
+									"code": 404,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"message\": \"Resource not found.\"\n}"
+								},
+								{
+									"name": "Internal server error.",
+									"originalRequest": {
+										"method": "DELETE",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/events/:eventId",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"events",
+												":eventId"
+											],
+											"variable": [
+												{
+													"key": "eventId"
+												}
+											]
+										}
+									},
+									"status": "Internal Server Error",
+									"code": 500,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"message\": \"An internal server error occurred.\"\n}"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "categories",
+					"item": [
+						{
+							"name": "Get all unique event categories",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/events/categories",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"events",
+										"categories"
+									]
+								},
+								"description": "Retrieves a list of all unique categories present in the events."
+							},
+							"response": [
+								{
+									"name": "Successfully retrieved event categories.",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/events/categories",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"events",
+												"categories"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"categories\": [\n    \"Music\",\n    \"Technology\",\n    \"Community\"\n  ]\n}"
+								},
+								{
+									"name": "Internal server error.",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/events/categories",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"events",
+												"categories"
+											]
+										}
+									},
+									"status": "Internal Server Error",
+									"code": 500,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"message\": \"An internal server error occurred.\"\n}"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "tags",
+					"item": [
+						{
+							"name": "Get all unique event tags",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/events/tags",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"events",
+										"tags"
+									]
+								},
+								"description": "Retrieves a list of all unique tags present across all events."
+							},
+							"response": [
+								{
+									"name": "Successfully retrieved event tags.",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/events/tags",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"events",
+												"tags"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"tags\": [\n    \"tech\",\n    \"api\",\n    \"nodejs\"\n  ]\n}"
+								},
+								{
+									"name": "Internal server error.",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/events/tags",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"events",
+												"tags"
+											]
+										}
+									},
+									"status": "Internal Server Error",
+									"code": 500,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"message\": \"An internal server error occurred.\"\n}"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "batch-get",
+					"item": [
+						{
+							"name": "Retrieve multiple events by their IDs",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"eventIds\": [\n    \"a1b2c3d4-e5f6-7890-1234-567890abcdef\"\n  ]\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/events/batch-get",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"events",
+										"batch-get"
+									]
+								},
+								"description": "Fetches a list of events based on an array of provided event UUIDs."
+							},
+							"response": [
+								{
+									"name": "Successfully retrieved events.",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"eventIds\": [\n    \"a1b2c3d4-e5f6-7890-1234-567890abcdef\"\n  ]\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/events/batch-get",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"events",
+												"batch-get"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"events\": [\n    {\n      \"$ref\": \"#/components/schemas/ApiEventResponse/example\"\n    }\n  ]\n}"
+								},
+								{
+									"name": "Invalid input data (e.g., empty array, invalid UUIDs).",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"eventIds\": [\n    \"a1b2c3d4-e5f6-7890-1234-567890abcdef\"\n  ]\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/events/batch-get",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"events",
+												"batch-get"
+											]
+										}
+									},
+									"status": "Bad Request",
+									"code": 400,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"message\": \"Validation error\",\n  \"errors\": {\n    \"title\": [\n      \"Title must be at least 3 characters long\"\n    ],\n    \"eventDate\": [\n      \"eventDate must be a valid date string in YYYY-MM-DD format\"\n    ]\n  }\n}"
+								},
+								{
+									"name": "Internal server error.",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"eventIds\": [\n    \"a1b2c3d4-e5f6-7890-1234-567890abcdef\"\n  ]\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/events/batch-get",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"events",
+												"batch-get"
+											]
+										}
+									},
+									"status": "Internal Server Error",
+									"code": 500,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"message\": \"An internal server error occurred.\"\n}"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "random",
+					"item": [
+						{
+							"name": "Get a single random event",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/events/random",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"events",
+										"random"
+									]
+								},
+								"description": "Retrieves a single event chosen randomly from the database."
+							},
+							"response": [
+								{
+									"name": "Successfully retrieved a random event.",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/events/random",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"events",
+												"random"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"id\": \"a1b2c3d4-e5f6-7890-1234-567890abcdef\",\n  \"userId\": \"b1c2d3e4-f5a6-7890-1234-567890abcdef\",\n  \"title\": \"Tech Conference 2025\",\n  \"description\": \"Annual conference for tech enthusiasts and professionals.\",\n  \"eventDate\": \"2025-09-15\",\n  \"eventTime\": \"09:00:00\",\n  \"locationDescription\": \"Convention Center, Hall A\",\n  \"organizerName\": \"TechMinds Inc.\",\n  \"category\": \"Technology\",\n  \"tags\": [\n    \"conference\",\n    \"networking\",\n    \"innovation\"\n  ],\n  \"websiteUrl\": \"https://techconf2025.example.com\",\n  \"createdAt\": \"2024-04-01T08:00:00Z\",\n  \"updatedAt\": \"2024-04-05T16:45:00Z\"\n}"
+								},
+								{
+									"name": "No events found in the database.",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/events/random",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"events",
+												"random"
+											]
+										}
+									},
+									"status": "Not Found",
+									"code": 404,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"message\": \"Resource not found.\"\n}"
+								},
+								{
+									"name": "Internal server error.",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "application/json"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/events/random",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"events",
+												"random"
+											]
+										}
+									},
+									"status": "Internal Server Error",
+									"code": 500,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"message\": \"An internal server error occurred.\"\n}"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Create a new event",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Art Workshop for Beginners\",\n  \"description\": \"Learn the basics of acrylic painting in a fun and relaxed environment.\",\n  \"eventDate\": \"2025-08-10\",\n  \"eventTime\": \"13:00:00\",\n  \"locationDescription\": \"Community Art Studio, Room 3\",\n  \"category\": \"Arts & Crafts\",\n  \"tags\": [\n    \"painting\",\n    \"workshop\",\n    \"art\"\n  ],\n  \"websiteUrl\": \"https://artworkshop.example.com\"\n}",
+							"options": {
+								"raw": {
+									"headerFamily": "json",
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/events",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"events"
+							]
+						},
+						"description": "Creates a new event with the provided details. Requires authentication."
+					},
+					"response": [
+						{
+							"name": "Event created successfully.",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer <token>",
+										"description": "Added as a part of security scheme: bearer"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"title\": \"Art Workshop for Beginners\",\n  \"description\": \"Learn the basics of acrylic painting in a fun and relaxed environment.\",\n  \"eventDate\": \"2025-08-10\",\n  \"eventTime\": \"13:00:00\",\n  \"locationDescription\": \"Community Art Studio, Room 3\",\n  \"category\": \"Arts & Crafts\",\n  \"tags\": [\n    \"painting\",\n    \"workshop\",\n    \"art\"\n  ],\n  \"websiteUrl\": \"https://artworkshop.example.com\"\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/events",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"events"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"id\": \"a1b2c3d4-e5f6-7890-1234-567890abcdef\",\n  \"userId\": \"b1c2d3e4-f5a6-7890-1234-567890abcdef\",\n  \"title\": \"Tech Conference 2025\",\n  \"description\": \"Annual conference for tech enthusiasts and professionals.\",\n  \"eventDate\": \"2025-09-15\",\n  \"eventTime\": \"09:00:00\",\n  \"locationDescription\": \"Convention Center, Hall A\",\n  \"organizerName\": \"TechMinds Inc.\",\n  \"category\": \"Technology\",\n  \"tags\": [\n    \"conference\",\n    \"networking\",\n    \"innovation\"\n  ],\n  \"websiteUrl\": \"https://techconf2025.example.com\",\n  \"createdAt\": \"2024-04-01T08:00:00Z\",\n  \"updatedAt\": \"2024-04-05T16:45:00Z\"\n}"
+						},
+						{
+							"name": "Invalid input data (validation error).",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer <token>",
+										"description": "Added as a part of security scheme: bearer"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"title\": \"Art Workshop for Beginners\",\n  \"description\": \"Learn the basics of acrylic painting in a fun and relaxed environment.\",\n  \"eventDate\": \"2025-08-10\",\n  \"eventTime\": \"13:00:00\",\n  \"locationDescription\": \"Community Art Studio, Room 3\",\n  \"category\": \"Arts & Crafts\",\n  \"tags\": [\n    \"painting\",\n    \"workshop\",\n    \"art\"\n  ],\n  \"websiteUrl\": \"https://artworkshop.example.com\"\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/events",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"events"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"message\": \"Validation error\",\n  \"errors\": {\n    \"title\": [\n      \"Title must be at least 3 characters long\"\n    ]\n  }\n}"
+						},
+						{
+							"name": "Unauthorized (authentication required).",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer <token>",
+										"description": "Added as a part of security scheme: bearer"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"title\": \"Art Workshop for Beginners\",\n  \"description\": \"Learn the basics of acrylic painting in a fun and relaxed environment.\",\n  \"eventDate\": \"2025-08-10\",\n  \"eventTime\": \"13:00:00\",\n  \"locationDescription\": \"Community Art Studio, Room 3\",\n  \"category\": \"Arts & Crafts\",\n  \"tags\": [\n    \"painting\",\n    \"workshop\",\n    \"art\"\n  ],\n  \"websiteUrl\": \"https://artworkshop.example.com\"\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/events",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"events"
+									]
+								}
+							},
+							"status": "Unauthorized",
+							"code": 401,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"message\": \"Unauthorized\"\n}"
+						},
+						{
+							"name": "Conflict (e.g., an event with similar unique details might already exist).",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer <token>",
+										"description": "Added as a part of security scheme: bearer"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"title\": \"Art Workshop for Beginners\",\n  \"description\": \"Learn the basics of acrylic painting in a fun and relaxed environment.\",\n  \"eventDate\": \"2025-08-10\",\n  \"eventTime\": \"13:00:00\",\n  \"locationDescription\": \"Community Art Studio, Room 3\",\n  \"category\": \"Arts & Crafts\",\n  \"tags\": [\n    \"painting\",\n    \"workshop\",\n    \"art\"\n  ],\n  \"websiteUrl\": \"https://artworkshop.example.com\"\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/events",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"events"
+									]
+								}
+							},
+							"status": "Conflict",
+							"code": 409,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"message\": \"Conflict: An event with similar unique details might already exist.\"\n}"
+						},
+						{
+							"name": "Internal server error.",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer <token>",
+										"description": "Added as a part of security scheme: bearer"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"title\": \"Art Workshop for Beginners\",\n  \"description\": \"Learn the basics of acrylic painting in a fun and relaxed environment.\",\n  \"eventDate\": \"2025-08-10\",\n  \"eventTime\": \"13:00:00\",\n  \"locationDescription\": \"Community Art Studio, Room 3\",\n  \"category\": \"Arts & Crafts\",\n  \"tags\": [\n    \"painting\",\n    \"workshop\",\n    \"art\"\n  ],\n  \"websiteUrl\": \"https://artworkshop.example.com\"\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/events",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"events"
+									]
+								}
+							},
+							"status": "Internal Server Error",
+							"code": 500,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"message\": \"An internal server error occurred.\"\n}"
+						}
+					]
+				},
+				{
+					"name": "List all events",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/events?page=1&limit=10&category=sed tempor Duis sit&tags=sed tempor Duis sit&startDate=2009-03-05&endDate=2009-03-05&sortBy=createdAt&sortOrder=desc&search=ea et deserunt minim",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"events"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Page number for pagination."
+								},
+								{
+									"key": "limit",
+									"value": "10",
+									"description": "Number of events per page."
+								},
+								{
+									"key": "category",
+									"value": "sed tempor Duis sit",
+									"description": "Filter events by category."
+								},
+								{
+									"key": "tags",
+									"value": "sed tempor Duis sit",
+									"description": "Comma-separated list of tags to filter by (e.g., 'tag1,tag2,tag3')."
+								},
+								{
+									"key": "startDate",
+									"value": "2009-03-05",
+									"description": "Filter events on or after this date (inclusive, YYYY-MM-DD)."
+								},
+								{
+									"key": "endDate",
+									"value": "2009-03-05",
+									"description": "Filter events on or before this date (inclusive, YYYY-MM-DD)."
+								},
+								{
+									"key": "sortBy",
+									"value": "createdAt",
+									"description": "Field to sort events by."
+								},
+								{
+									"key": "sortOrder",
+									"value": "desc",
+									"description": "Order to sort events by."
+								},
+								{
+									"key": "search",
+									"value": "ea et deserunt minim",
+									"description": "Search term for title, description, location, organizer, or category."
+								}
+							]
+						},
+						"description": "Retrieves a paginated list of events. Supports filtering, sorting, and searching."
+					},
+					"response": [
+						{
+							"name": "A paginated list of events.",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/events?page=1&limit=10&category=sed tempor Duis sit&tags=sed tempor Duis sit&startDate=2009-03-05&endDate=2009-03-05&sortBy=createdAt&sortOrder=desc&search=ea et deserunt minim",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"events"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1",
+											"description": "Page number for pagination."
+										},
+										{
+											"key": "limit",
+											"value": "10",
+											"description": "Number of events per page."
+										},
+										{
+											"key": "category",
+											"value": "sed tempor Duis sit",
+											"description": "Filter events by category."
+										},
+										{
+											"key": "tags",
+											"value": "sed tempor Duis sit",
+											"description": "Comma-separated list of tags to filter by (e.g., 'tag1,tag2,tag3')."
+										},
+										{
+											"key": "startDate",
+											"value": "2009-03-05",
+											"description": "Filter events on or after this date (inclusive, YYYY-MM-DD)."
+										},
+										{
+											"key": "endDate",
+											"value": "2009-03-05",
+											"description": "Filter events on or before this date (inclusive, YYYY-MM-DD)."
+										},
+										{
+											"key": "sortBy",
+											"value": "createdAt",
+											"description": "Field to sort events by."
+										},
+										{
+											"key": "sortOrder",
+											"value": "desc",
+											"description": "Order to sort events by."
+										},
+										{
+											"key": "search",
+											"value": "ea et deserunt minim",
+											"description": "Search term for title, description, location, organizer, or category."
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"events\": [\n    {\n      \"$ref\": \"#/components/schemas/ApiEventResponse/example\"\n    }\n  ],\n  \"totalEvents\": 2,\n  \"totalPages\": 1,\n  \"currentPage\": 1,\n  \"limit\": 10\n}"
+						},
+						{
+							"name": "Invalid query parameters.",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/events?page=1&limit=10&category=sed tempor Duis sit&tags=sed tempor Duis sit&startDate=2009-03-05&endDate=2009-03-05&sortBy=createdAt&sortOrder=desc&search=ea et deserunt minim",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"events"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1",
+											"description": "Page number for pagination."
+										},
+										{
+											"key": "limit",
+											"value": "10",
+											"description": "Number of events per page."
+										},
+										{
+											"key": "category",
+											"value": "sed tempor Duis sit",
+											"description": "Filter events by category."
+										},
+										{
+											"key": "tags",
+											"value": "sed tempor Duis sit",
+											"description": "Comma-separated list of tags to filter by (e.g., 'tag1,tag2,tag3')."
+										},
+										{
+											"key": "startDate",
+											"value": "2009-03-05",
+											"description": "Filter events on or after this date (inclusive, YYYY-MM-DD)."
+										},
+										{
+											"key": "endDate",
+											"value": "2009-03-05",
+											"description": "Filter events on or before this date (inclusive, YYYY-MM-DD)."
+										},
+										{
+											"key": "sortBy",
+											"value": "createdAt",
+											"description": "Field to sort events by."
+										},
+										{
+											"key": "sortOrder",
+											"value": "desc",
+											"description": "Order to sort events by."
+										},
+										{
+											"key": "search",
+											"value": "ea et deserunt minim",
+											"description": "Search term for title, description, location, organizer, or category."
+										}
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"message\": \"Validation error\",\n  \"errors\": {\n    \"limit\": [\n      \"Number must be less than or equal to 100\"\n    ],\n    \"endDate\": [\n      \"endDate cannot be before startDate\"\n    ]\n  }\n}"
+						},
+						{
+							"name": "Internal server error.",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/events?page=1&limit=10&category=sed tempor Duis sit&tags=sed tempor Duis sit&startDate=2009-03-05&endDate=2009-03-05&sortBy=createdAt&sortOrder=desc&search=ea et deserunt minim",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"events"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1",
+											"description": "Page number for pagination."
+										},
+										{
+											"key": "limit",
+											"value": "10",
+											"description": "Number of events per page."
+										},
+										{
+											"key": "category",
+											"value": "sed tempor Duis sit",
+											"description": "Filter events by category."
+										},
+										{
+											"key": "tags",
+											"value": "sed tempor Duis sit",
+											"description": "Comma-separated list of tags to filter by (e.g., 'tag1,tag2,tag3')."
+										},
+										{
+											"key": "startDate",
+											"value": "2009-03-05",
+											"description": "Filter events on or after this date (inclusive, YYYY-MM-DD)."
+										},
+										{
+											"key": "endDate",
+											"value": "2009-03-05",
+											"description": "Filter events on or before this date (inclusive, YYYY-MM-DD)."
+										},
+										{
+											"key": "sortBy",
+											"value": "createdAt",
+											"description": "Field to sort events by."
+										},
+										{
+											"key": "sortOrder",
+											"value": "desc",
+											"description": "Order to sort events by."
+										},
+										{
+											"key": "search",
+											"value": "ea et deserunt minim",
+											"description": "Search term for title, description, location, organizer, or category."
+										}
+									]
+								}
+							},
+							"status": "Internal Server Error",
+							"code": 500,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"message\": \"An internal server error occurred.\"\n}"
+						}
+					]
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000/api"
+		}
+	]
+}

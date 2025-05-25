@@ -1,0 +1,63 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique @db.VarChar(255)
+  passwordHash String   @map("password_hash") @db.Text
+  username     String   @unique @db.VarChar(100) // Changed from String? to String
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  events      Event[]          @relation("UserEvents")
+  savedEvents UserSavedEvent[] @relation("UserSavedEvents")
+
+  @@map("eventspotter_users")
+}
+
+model Event {
+  id                  String   @id @default(uuid()) @db.Uuid
+  userId              String   @map("user_id") @db.Uuid
+  title               String   @db.VarChar(255)
+  description         String   @db.Text
+  eventDate           DateTime @map("event_date") @db.Date
+  eventTime           DateTime? @map("event_time") @db.Time
+  locationDescription String   @map("location_description") @db.Text
+  organizerName       String   @map("organizer_name") @db.VarChar(100) // Stays non-nullable
+  category            String   @db.VarChar(100)
+  tags                String[] @default([]) // Simplified: Removed @db.Text[]
+  websiteUrl          String?  @map("website_url") @db.VarChar(2048)
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  user         User             @relation("UserEvents", fields: [userId], references: [id], onDelete: Cascade)
+  savedByUsers UserSavedEvent[] @relation("EventSavedByUsers")
+
+  @@map("eventspotter_events")
+}
+
+// This table is for the many-to-many relationship between users and events they save.
+// The PRD implies this functionality (users saving events) but doesn't explicitly define this table in section 5.2.
+model UserSavedEvent {
+  userId  String   @map("user_id") @db.Uuid
+  eventId String   @map("event_id") @db.Uuid
+  savedAt DateTime @default(now()) @map("saved_at") @db.Timestamptz // Assuming a timestamp for when it was saved
+
+  user  User  @relation("UserSavedEvents", fields: [userId], references: [id], onDelete: Cascade)
+  event Event @relation("EventSavedByUsers", fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@id([userId, eventId])
+  @@map("eventspotter_user_saved_events") // Changed from "user_saved_events"
+}

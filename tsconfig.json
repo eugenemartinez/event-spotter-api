@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "ES2022", // Or a newer version like ES2022
+    "lib": ["ESNext"],
+    "module": "commonjs",          // Changed
+    "moduleResolution": "node",     // Changed (or remove)
+    "outDir": "./dist", // Vercel will look for compiled output here
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true, // Allows importing JSON files
+    // "baseUrl": "./src", // Optional: if you want to use absolute paths from src
+    // "paths": {        // Optional: for path aliases
+    //   "@/*": ["*"]
+    // }
+    "sourceMap": true, // Good for debugging
+    "declaration": false // We don't need .d.ts files for Vercel deployment of the app itself
+  },
+  "include": [
+    "src/**/*.ts", // Include all .ts files in src
+    "api/**/*.ts"  // Include .ts files in api (for Vercel adapter)
+  ],
+  "exclude": [
+    "node_modules",
+    "public" // Exclude the output directory from compilation input
+  ]
+}
