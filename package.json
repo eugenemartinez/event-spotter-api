@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.ts",
   "scripts": {
+    "build": "prisma generate && tsc",
     "start": "node server.ts",
     "start:dev": "nodemon --watch src --watch api --ext ts,json --exec \"ts-node src/server.ts\"",
     "lint": "eslint . --ext .ts",
