@@ -20,12 +20,14 @@ async function swaggerSetup(server: FastifyInstance) {
   ];
 
   const productionBaseUrl = process.env.VERCEL_URL || process.env.PUBLIC_DOMAIN_URL;
+  let secureProductionApiOrigin = ''; // Variable to store the secure production origin
+
   if (process.env.NODE_ENV === 'production' && productionBaseUrl) {
-    const secureProductionBaseUrl = productionBaseUrl.startsWith('http')
-      ? productionBaseUrl
-      : `https://${productionBaseUrl}`;
+    secureProductionApiOrigin = productionBaseUrl.startsWith('http')
+      ? productionBaseUrl // Assuming it's already a full origin like https://domain.com
+      : `https://${productionBaseUrl}`; // Prepend https if it's just a hostname
     serverList.unshift({
-      url: `${secureProductionBaseUrl}/api`,
+      url: `${secureProductionApiOrigin}/api`,
       description: 'Production server',
     });
   }
@@ -59,17 +61,24 @@ async function swaggerSetup(server: FastifyInstance) {
     },
     staticCSP: true,
     transformStaticCSP: (_header) => {
-      const connectSrcSources = ["'self'"];
-      if (process.env.NODE_ENV !== 'production') {
+      const connectSrcSources = ["'self'"]; // Always allow 'self'
+
+      if (process.env.NODE_ENV === 'production') {
+        // Use the secureProductionApiOrigin derived earlier
+        if (secureProductionApiOrigin) {
+          connectSrcSources.push(secureProductionApiOrigin);
+        }
+      } else {
+        // For local development, allow connections to local API servers
         connectSrcSources.push(...localDevApiOrigins);
       }
 
       const cspDirectives = [
         "default-src 'self'",
-        "script-src 'self' 'unsafe-inline'",
-        "style-src 'self' https: 'unsafe-inline'",
-        "img-src 'self' data: validator.swagger.io",
-        `connect-src ${connectSrcSources.join(' ')}`,
+        "script-src 'self' 'unsafe-inline'", // 'unsafe-inline' is often needed for Swagger UI's inline scripts
+        "style-src 'self' https: 'unsafe-inline'", // 'unsafe-inline' for styles, and https: for external fonts if any
+        "img-src 'self' data: validator.swagger.io", // Allows Swagger validator badge
+        `connect-src ${connectSrcSources.join(' ')}`, // Add other sources here
       ];
       return cspDirectives.join('; ');
     },
