@@ -37,6 +37,7 @@ vi.mock('../../lib/prisma', async (importActual) => {
     default: {
       // Mock for the default prisma client instance
       user: {
+        count: vi.fn(), // <--- ADD THIS LINE
         findFirst: vi.fn(),
         create: vi.fn(),
         findUnique: vi.fn(),
@@ -98,6 +99,9 @@ describe('Auth Controllers', () => {
 
   // --- registerUserHandler ---
   describe('registerUserHandler', () => {
+    // Define the limit, or import it if exported from auth.controllers.ts
+    const MAX_USERS_LIMIT = 500; // Make sure this matches the controller
+
     it('should register a new user successfully and return user data with a token', async () => {
       // Arrange
       const input = {
@@ -115,6 +119,9 @@ describe('Auth Controllers', () => {
       };
       const mockToken = 'mock.jwt.token';
 
+      // ---- ADD THIS MOCK FOR THE COUNT ----
+      (prismaClientMock.user.count as Mock).mockResolvedValue(0); // Assume limit is not reached
+
       (prismaClientMock.user.findFirst as Mock).mockResolvedValue(null); // Use the mocked client
       (HashUtils.hashPassword as Mock).mockResolvedValue(mockHashedPassword); // Changed: Used 'Mock' directly
       (prismaClientMock.user.create as Mock).mockResolvedValue(mockNewUser); // Changed: Used 'Mock' directly
@@ -124,6 +131,7 @@ describe('Auth Controllers', () => {
       await AuthControllers.registerUserHandler(mockRequest, mockReply);
 
       // Assert
+      expect(prismaClientMock.user.count).toHaveBeenCalledTimes(1); // <--- ADD THIS ASSERTION
       expect(prismaClientMock.user.findFirst).toHaveBeenCalledWith({
         where: { OR: [{ email: input.email }, { username: input.username }] },
       });
@@ -164,12 +172,16 @@ describe('Auth Controllers', () => {
       mockRequest.body = input;
       const existingUser = { id: 'user-id-existing', email: input.email, username: 'anotherUser' };
 
+      // ---- ADD THIS MOCK FOR THE COUNT ----
+      (prismaClientMock.user.count as Mock).mockResolvedValue(0); // Assume limit is not reached
+
       (prismaClientMock.user.findFirst as Mock).mockResolvedValue(existingUser); // Use the mocked client
 
       // Act
       await AuthControllers.registerUserHandler(mockRequest, mockReply);
 
       // Assert
+      expect(prismaClientMock.user.count).toHaveBeenCalledTimes(1); // <--- ADD THIS ASSERTION
       expect(prismaClientMock.user.findFirst).toHaveBeenCalledWith({
         where: { OR: [{ email: input.email }, { username: input.username }] },
       });
@@ -201,12 +213,16 @@ describe('Auth Controllers', () => {
         username: input.username,
       };
 
+      // ---- ADD THIS MOCK FOR THE COUNT ----
+      (prismaClientMock.user.count as Mock).mockResolvedValue(0); // Assume limit is not reached
+
       (prismaClientMock.user.findFirst as Mock).mockResolvedValue(existingUser); // Use the mocked client
 
       // Act
       await AuthControllers.registerUserHandler(mockRequest, mockReply);
 
       // Assert
+      expect(prismaClientMock.user.count).toHaveBeenCalledTimes(1); // <--- ADD THIS ASSERTION
       expect(prismaClientMock.user.findFirst).toHaveBeenCalledWith({
         where: { OR: [{ email: input.email }, { username: input.username }] },
       });
@@ -234,12 +250,16 @@ describe('Auth Controllers', () => {
       mockRequest.body = input;
       const existingUser = { id: 'user-id-existing', email: input.email, username: input.username };
 
+      // ---- ADD THIS MOCK FOR THE COUNT ----
+      (prismaClientMock.user.count as Mock).mockResolvedValue(0); // Assume limit is not reached
+
       (prismaClientMock.user.findFirst as Mock).mockResolvedValue(existingUser); // Use the mocked client
 
       // Act
       await AuthControllers.registerUserHandler(mockRequest, mockReply);
 
       // Assert
+      expect(prismaClientMock.user.count).toHaveBeenCalledTimes(1); // <--- ADD THIS ASSERTION
       expect(prismaClientMock.user.findFirst).toHaveBeenCalledWith({
         where: { OR: [{ email: input.email }, { username: input.username }] },
       });
@@ -256,6 +276,38 @@ describe('Auth Controllers', () => {
         'Registration attempt failed: User already exists.',
       );
     });
+
+    // ---- ADD THIS NEW TEST CASE FOR THE LIMIT ----
+    it('should return 503 if user registration limit is reached', async () => {
+      // Arrange
+      const input = {
+        username: 'newUserLimited',
+        email: 'limited@example.com',
+        password: 'Password123!',
+      };
+      mockRequest.body = input;
+
+      (prismaClientMock.user.count as Mock).mockResolvedValue(MAX_USERS_LIMIT); // Simulate limit reached
+
+      // Act
+      await AuthControllers.registerUserHandler(mockRequest, mockReply);
+
+      // Assert
+      expect(prismaClientMock.user.count).toHaveBeenCalledTimes(1);
+      expect(mockReply.code).toHaveBeenCalledWith(503);
+      expect(mockReply.send).toHaveBeenCalledWith({
+        message: 'User registration limit reached. Please try again later.',
+      });
+      expect(prismaClientMock.user.findFirst).not.toHaveBeenCalled();
+      expect(prismaClientMock.user.create).not.toHaveBeenCalled();
+      expect(HashUtils.hashPassword).not.toHaveBeenCalled();
+      expect(mockReply.jwtSign).not.toHaveBeenCalled();
+      expect(mockRequest.log.warn).toHaveBeenCalledWith(
+        { currentCount: MAX_USERS_LIMIT, limit: MAX_USERS_LIMIT },
+        'User registration limit reached.',
+      );
+    });
+
 
     it('should handle ZodError for invalid input by returning 400', async () => {
       // Arrange
@@ -300,12 +352,22 @@ describe('Auth Controllers', () => {
         },
       ]);
 
-      (prismaClientMock.user.findFirst as Mock).mockRejectedValue(zodErrorInstance); // Use the mocked client
+      // ---- ADD THIS MOCK FOR THE COUNT ----
+      // This test simulates an error *after* the count, so the count should still be mocked as not reaching the limit.
+      // However, if ZodError is thrown by Fastify's schema validation *before* the handler,
+      // then prisma.user.count wouldn't even be called.
+      // Given the controller's structure, if ZodError is caught *inside* the handler,
+      // the count must have happened.
+      (prismaClientMock.user.count as Mock).mockResolvedValue(0);
+
+
+      (prismaClientMock.user.findFirst as Mock).mockRejectedValue(zodErrorInstance);
 
       // Act
       await AuthControllers.registerUserHandler(mockRequest, mockReply);
 
       // Assert
+      expect(prismaClientMock.user.count).toHaveBeenCalledTimes(1); // <--- ADD THIS ASSERTION
       expect(mockReply.code).toHaveBeenCalledWith(400);
       expect(mockReply.send).toHaveBeenCalledWith({
         message: 'Validation error',
@@ -325,6 +387,9 @@ describe('Auth Controllers', () => {
       mockRequest.body = input;
       const mockHashedPassword = 'hashedPassword123';
 
+      // ---- ADD THIS MOCK FOR THE COUNT ----
+      (prismaClientMock.user.count as Mock).mockResolvedValue(0); // Assume limit is not reached
+
       (prismaClientMock.user.findFirst as Mock).mockResolvedValue(null); // Use the mocked client
       (HashUtils.hashPassword as Mock).mockResolvedValue(mockHashedPassword);
 
@@ -340,6 +405,7 @@ describe('Auth Controllers', () => {
       await AuthControllers.registerUserHandler(mockRequest, mockReply);
 
       // Assert
+      expect(prismaClientMock.user.count).toHaveBeenCalledTimes(1); // <--- ADD THIS ASSERTION
       expect(prismaClientMock.user.findFirst).toHaveBeenCalled();
       expect(HashUtils.hashPassword).toHaveBeenCalledWith(input.password);
       expect(prismaClientMock.user.create).toHaveBeenCalledWith({
@@ -371,17 +437,17 @@ describe('Auth Controllers', () => {
       mockRequest.body = input;
       const genericError = new Error('Something went very wrong!');
 
-      // Simulate a generic error during the first async operation
-      (prismaClientMock.user.findFirst as Mock).mockRejectedValue(genericError);
+      // Simulate a generic error during the count operation
+      (prismaClientMock.user.count as Mock).mockRejectedValue(genericError);
+
 
       // Act & Assert
-      // We expect the function to throw the error, so we wrap the call in a try/catch
-      // or use expect(...).rejects.toThrow()
       await expect(AuthControllers.registerUserHandler(mockRequest, mockReply)).rejects.toThrow(
         genericError,
       );
 
       // Also assert that no response was sent and no user was created/token generated
+      expect(prismaClientMock.user.count).toHaveBeenCalledTimes(1); // <--- ADD THIS ASSERTION
       expect(mockReply.code).not.toHaveBeenCalled();
       expect(mockReply.send).not.toHaveBeenCalled();
       expect(prismaClientMock.user.create).not.toHaveBeenCalled();
@@ -1601,7 +1667,7 @@ describe('Auth Controllers', () => {
     it('should handle cases where a saved event relation points to a non-existent event', async () => {
       // Arrange
       const now = new Date();
-      const eventDateValid = new Date(now);
+      const eventDateValid = new Date();
       eventDateValid.setDate(now.getDate() + 7);
 
       const mockValidPrismaEvent = {
@@ -1643,7 +1709,7 @@ describe('Auth Controllers', () => {
         // ... other transformed fields from your actual transformEventForApi for mockValidPrismaEvent
         // For this test, we assume the controller will add isSavedByCurrentUser: true
         // and transformEventForApi (mocked) will provide savesCount
-        isSavedByCurrentUser: true, // This will be added by the controller or test mock logic
+        isSavedByCurrentUser: true, // This will be added by the controller or test assertion logic
         savesCount: 1,
         // Ensure all fields returned by your transformEventForApi mock are here
         userId: mockValidPrismaEvent.userId,
@@ -1673,7 +1739,7 @@ describe('Auth Controllers', () => {
             return {
               ...mockApiValidEvent, // Use the more complete definition
               savesCount: event._count?.savedByUsers ?? 0,
-              // isSavedByCurrentUser will be handled by the controller or test assertion logic
+              // isSavedByCurrentUser will be handled by the controller or test logic
             };
           }
           return null; // Should not be called for the null event

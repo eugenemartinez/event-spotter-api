@@ -11,11 +11,8 @@ import {
 } from './event.schemas';
 import { AppFastifyRequest, AppFastifyReply, AuthenticatedUser } from '../../types'; // Import App types
 
-// Define the structure of your authenticated user object (can be shared or imported)
-// interface AuthenticatedUser {
-//   id: string;
-//   username: string;
-// }
+const MAX_EVENTS_LIMIT = 500; // Define the limit
+const MAX_SAVED_EVENTS_LIMIT = 500; // Define the limit for saved events
 
 // Prisma Event type (can be shared or imported)
 export type PrismaEventType = Prisma.EventGetPayload<{
@@ -95,6 +92,13 @@ export async function createEventHandler(
   const user = request.user as AuthenticatedUser;
 
   try {
+    // Check event count limit
+    const eventCount = await prisma.event.count();
+    if (eventCount >= MAX_EVENTS_LIMIT) {
+      request.log.warn({ currentCount: eventCount, limit: MAX_EVENTS_LIMIT }, 'Event creation limit reached.');
+      return reply.code(503).send({ message: 'Event creation limit reached. Please try again later.' });
+    }
+
     // Explicitly parse and validate the body using the Zod schema
     // This makes the controller robust even if Fastify's pre-validation is bypassed (like in unit tests)
     // or if you want an extra layer of validation.
@@ -384,24 +388,56 @@ export async function saveEventHandler(
 ) {
   const user = request.user as AuthenticatedUser;
   const { eventId } = request.params;
+
   try {
+    // Check saved event count limit
+    const savedEventCount = await prisma.userSavedEvent.count();
+    if (savedEventCount >= MAX_SAVED_EVENTS_LIMIT) {
+      request.log.warn({ currentCount: savedEventCount, limit: MAX_SAVED_EVENTS_LIMIT }, 'Event saving limit reached.');
+      return reply.code(503).send({ message: 'Event saving limit reached. Please try again later.' });
+    }
+
     const eventExists = await prisma.event.count({ where: { id: eventId } });
-    if (!eventExists) return reply.code(404).send({ message: 'Event not found.' });
+    if (!eventExists) {
+      request.log.warn(
+        { userId: user.id, eventId },
+        'Attempt to save non-existent event.',
+      );
+      return reply.code(404).send({ message: 'Event not found.' });
+    }
 
     const existingSave = await prisma.userSavedEvent.findUnique({
       where: { userId_eventId: { userId: user.id, eventId } },
     });
-    if (existingSave) return reply.code(200).send({ message: 'Event already saved.' });
+    if (existingSave) {
+      request.log.info(
+        { userId: user.id, eventId },
+        'Event already saved by user.',
+      );
+      return reply.code(200).send({ message: 'Event already saved.' });
+    }
 
     await prisma.userSavedEvent.create({
       data: { userId: user.id, eventId: eventId },
     });
+
+    // Keep this if it helped the "save successful" log pass
+    await Promise.resolve(); 
+
+    request.log.info(
+      { userId: user.id, eventId },
+      'Event saved successfully by user.',
+    );
     return reply.code(201).send({ message: 'Event saved successfully.' });
   } catch (error: unknown) {
-    request.log.error({ error, eventId, userId: user.id }, 'Error saving event');
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+      request.log.warn(
+        { error, userId: user.id, eventId },
+        'Foreign key constraint violation while saving event (P2003).',
+      );
       return reply.code(404).send({ message: 'Event not found or user invalid.' });
     }
+    request.log.error({ error, eventId, userId: user.id }, 'Error saving event');
     return reply.code(500).send({ message: 'An error occurred while saving the event.' });
   }
 }

@@ -16,6 +16,8 @@ import {
 import { ApiEventResponse } from '../events/event.schemas';
 import { AuthenticatedUser, AppFastifyRequest, AppFastifyReply } from '../../types';
 
+const MAX_USERS_LIMIT = 500; // Define the limit
+
 // --- Controller for POST /api/auth/register ---
 export async function registerUserHandler(
   request: AppFastifyRequest<{ Body: RegisterUserInput }>,
@@ -24,6 +26,13 @@ export async function registerUserHandler(
   const { email, password, username } = request.body;
 
   try {
+    // Check user count limit
+    const userCount = await prisma.user.count();
+    if (userCount >= MAX_USERS_LIMIT) {
+      request.log.warn({ currentCount: userCount, limit: MAX_USERS_LIMIT }, 'User registration limit reached.');
+      return reply.code(503).send({ message: 'User registration limit reached. Please try again later.' });
+    }
+
     const existingUser = await prisma.user.findFirst({
       where: { OR: [{ email }, { username }] },
     });
